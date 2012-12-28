@@ -40,9 +40,4 @@ public class DropboxURIChooser extends URIChooser {
 	public Icon getIcon() {
 		return new ImageIcon(DropboxURIChooser.class.getResource("dropbox.png"));
 	}
-	
-	@Override
-	public String getName() {
-		return getScheme();
-	}
 }

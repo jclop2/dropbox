@@ -105,7 +105,7 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 	
 	private JButton getConnectButton() {
 		if (connectButton==null) {
-			connectButton = new JButton(Messages.getString("Chooser.ConnectionDialog.startButton")); //$NON-NLS-1$
+			connectButton = new JButton(Messages.getString("ConnectionDialog.startButton")); //$NON-NLS-1$
 			connectButton.setToolTipText(Messages.getString("ConnectionDialog.startButton.tooltip")); //$NON-NLS-1$
 		}
 		return connectButton;
