@@ -29,7 +29,25 @@ public class DropboxService extends Service {
 		this.api = api;
 	}
 
-	public DropboxAPI<? extends WebAuthSession> getDropboxAPI() {
+	public DropboxAPI<? extends WebAuthSession> getDropboxAPI(Account account) {
+		WebAuthSession session = this.api.getSession();
+		if (account==null) { 
+			// We need a new fresh unlinked session
+			session.unlink();
+		} else {
+			// We need a linked session
+			AccessTokenPair pair = this.api.getSession().getAccessTokenPair();
+			if (pair!=null) {
+				if (pair.equals((AccessTokenPair) account.getConnectionData())) {
+					// Linked with the right account
+					return this.api;
+				} else {
+					// Not linked with the right account
+					session.unlink();
+				}
+			}
+			session.setAccessTokenPair((AccessTokenPair) account.getConnectionData());
+		}
 		return this.api;
 	}
 
@@ -40,7 +58,7 @@ public class DropboxService extends Service {
 	
 	@Override
 	public Collection<Entry> getRemoteFiles(Account account, Cancellable task) throws UnreachableHostException {
-		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI();
+		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(account);
 		try {
 			// Refresh the quota data
 			com.dropbox.client2.DropboxAPI.Account accountInfo = api.accountInfo();

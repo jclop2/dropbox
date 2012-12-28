@@ -19,7 +19,7 @@ public class DropboxURIChooser extends URIChooser {
 
 	@Override
 	protected Account createNewAccount() {
-		ConnectionDialog connectionDialog = new ConnectionDialog(Utils.getOwnerWindow(this), ((DropboxService)getService()).getDropboxAPI());
+		ConnectionDialog connectionDialog = new ConnectionDialog(Utils.getOwnerWindow(this), ((DropboxService)getService()).getDropboxAPI(null));
 		connectionDialog.setVisible(true);
 		AccessTokenPair pair = connectionDialog.getResult();
 		if (pair==null) return null;
@@ -28,7 +28,7 @@ public class DropboxURIChooser extends URIChooser {
 	}
 	
 	protected String getRemoteConnectingWording() {
-		return Messages.getString("connecting");
+		return Messages.getString("connecting"); //$NON-NLS-1$
 	}
 
 	@Override
@@ -38,6 +38,6 @@ public class DropboxURIChooser extends URIChooser {
 
 	@Override
 	public Icon getIcon() {
-		return new ImageIcon(DropboxURIChooser.class.getResource("dropbox.png"));
+		return new ImageIcon(DropboxURIChooser.class.getResource("dropbox.png")); //$NON-NLS-1$
 	}
 }
