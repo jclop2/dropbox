@@ -6,12 +6,12 @@ import javax.swing.ImageIcon;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.dropbox.DropboxService;
-import com.fathzer.soft.jclop.swing.URIChooser;
+import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
 
 import net.astesana.ajlib.swing.Utils;
 
 @SuppressWarnings("serial")
-public class DropboxURIChooser extends URIChooser {
+public class DropboxURIChooser extends AbstractURIChooserPanel {
 
 	public DropboxURIChooser(DropboxService service) {
 		super(service);
