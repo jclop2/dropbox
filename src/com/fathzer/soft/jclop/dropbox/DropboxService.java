@@ -62,9 +62,8 @@ public class DropboxService extends Service {
 		try {
 			// Refresh the quota data
 			com.dropbox.client2.DropboxAPI.Account accountInfo = api.accountInfo();
-			long quota = accountInfo.quota;
-			long used = accountInfo.quotaNormal+accountInfo.quotaShared;
-			//FIXME update the account data
+			account.setQuota(accountInfo.quota);
+			account.setUsed(accountInfo.quotaNormal+accountInfo.quotaShared);
 			
 			if (task.isCancelled()) return null;
 			// Get the remote files list //FIXME The following line will hang if content has more than 2500 entries
