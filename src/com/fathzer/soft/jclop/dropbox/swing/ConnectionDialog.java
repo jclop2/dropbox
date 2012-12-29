@@ -16,7 +16,7 @@ import com.dropbox.client2.exception.DropboxUnlinkedException;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.WebAuthSession;
 import com.dropbox.client2.session.WebAuthSession.WebAuthInfo;
-import com.fathzer.soft.jclop.swing.URIChooser;
+import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
 
 import net.astesana.ajlib.swing.Browser;
 import net.astesana.ajlib.swing.Utils;
@@ -56,13 +56,13 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 			accountInfo = data.accountInfo();
 		} catch (DropboxUnlinkedException e) {
 			// The user didn't grant the access to Dropbox
-			URIChooser.showError(this, Messages.getString("ConnectionDialog.accessNotGranted")); //$NON-NLS-1$
+			AbstractURIChooserPanel.showError(this, Messages.getString("ConnectionDialog.accessNotGranted")); //$NON-NLS-1$
 			connectionHasStarted = false;
 			getConnectButton().setEnabled(true);
 			updateOkButtonEnabled();
 			return;
 		} catch (DropboxException e) {
-			URIChooser.showError(this, Messages.getString("ConnectionDialog.unexpectedError")); //$NON-NLS-1$
+			AbstractURIChooserPanel.showError(this, Messages.getString("ConnectionDialog.unexpectedError")); //$NON-NLS-1$
 		}
 		super.confirm();
 	}
@@ -94,7 +94,7 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 					connectionHasStarted = true;
 				} catch (Throwable e) {
 					e.printStackTrace();
-					URIChooser.showError(window, Messages.getString("ConnectionDialog.error.unableToLaunchBrowser.message")); //$NON-NLS-1$
+					AbstractURIChooserPanel.showError(window, Messages.getString("ConnectionDialog.error.unableToLaunchBrowser.message")); //$NON-NLS-1$
 				}
 				connectButton.setEnabled(false);
 				updateOkButtonEnabled();
