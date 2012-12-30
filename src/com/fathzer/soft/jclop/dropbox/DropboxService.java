@@ -71,8 +71,8 @@ public class DropboxService extends Service {
 			Collection<Entry> result = new ArrayList<Entry>();
 			for (com.dropbox.client2.DropboxAPI.Entry entry : contents) {
 				if (!entry.isDeleted) {
-					String local = getLocalPath(entry.fileName());
-					if (local!=null) result.add(new Entry(account, local));
+					Entry jclopEntry = getRemoteEntry(account, entry.fileName());
+					if (jclopEntry!=null) result.add(jclopEntry);
 				}
 			}
 			return result;
