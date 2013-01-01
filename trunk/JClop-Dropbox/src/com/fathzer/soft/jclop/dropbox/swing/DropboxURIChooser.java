@@ -19,7 +19,7 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 
 	@Override
 	protected Account createNewAccount() {
-		ConnectionDialog connectionDialog = new ConnectionDialog(Utils.getOwnerWindow(this), ((DropboxService)getService()).getDropboxAPI(null));
+		ConnectionDialog connectionDialog = new ConnectionDialog(Utils.getOwnerWindow(this), ((DropboxService)getService()).getDropboxAPI(null), getLocale());
 		connectionDialog.setVisible(true);
 		AccessTokenPair pair = connectionDialog.getResult();
 		if (pair==null) return null;
@@ -28,12 +28,12 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 	}
 	
 	protected String getRemoteConnectingWording() {
-		return Messages.getString("connecting"); //$NON-NLS-1$
+		return MessagesPack.getString("connecting", getLocale()); //$NON-NLS-1$
 	}
 
 	@Override
 	public String getTooltip(boolean save) {
-		return save?Messages.getString("save.tabTooltip"):Messages.getString("read.tabTooltip"); //$NON-NLS-1$ //$NON-NLS-2$
+		return save?MessagesPack.getString("save.tabTooltip", getLocale()):MessagesPack.getString("read.tabTooltip", getLocale()); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	@Override

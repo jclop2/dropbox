@@ -9,6 +9,7 @@ import javax.swing.JLabel;
 
 import java.awt.GridBagConstraints;
 import java.text.MessageFormat;
+import java.util.Locale;
 
 import java.awt.Insets;
 
@@ -26,7 +27,8 @@ class ConnectionPanel extends JPanel {
 	/**
 	 * Create the panel.
 	 */
-	ConnectionPanel(String okButtonName) {
+	ConnectionPanel(String okButtonName, Locale locale) {
+		setLocale(locale);
 		this.okButtonName = okButtonName;
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		setLayout(gridBagLayout);
@@ -63,7 +65,7 @@ class ConnectionPanel extends JPanel {
 	
 	private JLabel getLblNewLabel() {
 		if (lblNewLabel == null) {
-			String message = Messages.getString("ConnectionDialog.message.content"); //$NON-NLS-1$
+			String message = MessagesPack.getString("ConnectionDialog.message.content", getLocale()); //$NON-NLS-1$
 			message = MessageFormat.format(message, getConnectButtonName(), okButtonName);
 			lblNewLabel = new JLabel();
 			lblNewLabel.setText(message);
@@ -72,12 +74,12 @@ class ConnectionPanel extends JPanel {
 	}
 
 	String getConnectButtonName() {
-		return Messages.getString("ConnectionDialog.startButton"); //$NON-NLS-1$
+		return MessagesPack.getString("ConnectionDialog.startButton", getLocale()); //$NON-NLS-1$
 	}
 	
 	private JLabel getTextArea() {
 		if (textArea == null) {
-			textArea = new JLabel(Messages.getString("ConnectionDialog.message.header"));  //$NON-NLS-1$
+			textArea = new JLabel(MessagesPack.getString("ConnectionDialog.message.header", getLocale()));  //$NON-NLS-1$
 		}
 		return textArea;
 	}

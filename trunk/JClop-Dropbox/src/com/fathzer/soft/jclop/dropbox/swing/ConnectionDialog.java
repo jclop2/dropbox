@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URI;
 import java.text.MessageFormat;
+import java.util.Locale;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -30,14 +31,15 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 	private JButton connectButton;
 	private Account accountInfo;
 
-	public ConnectionDialog(Window owner, DropboxAPI<? extends WebAuthSession> dropboxAPI) {
-		super(owner, Messages.getString("ConnectionDialog.title"), dropboxAPI); //$NON-NLS-1$
+	public ConnectionDialog(Window owner, DropboxAPI<? extends WebAuthSession> dropboxAPI, Locale locale) {
+		super(owner, MessagesPack.getString("ConnectionDialog.title", locale), dropboxAPI); //$NON-NLS-1$
 		this.connectionHasStarted = false;
+		this.setLocale(locale);
 	}
 
 	@Override
 	protected JPanel createCenterPane() {
-		return new ConnectionPanel(getOkButton().getText());
+		return new ConnectionPanel(getOkButton().getText(), getLocale());
 	}
 
 	@Override
@@ -56,21 +58,21 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 			accountInfo = data.accountInfo();
 		} catch (DropboxUnlinkedException e) {
 			// The user didn't grant the access to Dropbox
-			AbstractURIChooserPanel.showError(this, Messages.getString("ConnectionDialog.accessNotGranted")); //$NON-NLS-1$
+			AbstractURIChooserPanel.showError(this, MessagesPack.getString("ConnectionDialog.accessNotGranted", getLocale()), getLocale()); //$NON-NLS-1$
 			connectionHasStarted = false;
 			getConnectButton().setEnabled(true);
 			updateOkButtonEnabled();
 			return;
 		} catch (DropboxException e) {
-			AbstractURIChooserPanel.showError(this, Messages.getString("ConnectionDialog.unexpectedError")); //$NON-NLS-1$
+			AbstractURIChooserPanel.showError(this, MessagesPack.getString("ConnectionDialog.unexpectedError", getLocale()), getLocale()); //$NON-NLS-1$
 		}
 		super.confirm();
 	}
 
 	@Override
 	protected String getOkDisabledCause() {
-		String btnName = Messages.getString("ConnectionDialog.startButton"); //$NON-NLS-1$
-		if (!this.connectionHasStarted) return MessageFormat.format(Messages.getString("ConnectionDialog.error.processNotStarted"),btnName); //$NON-NLS-1$
+		String btnName = MessagesPack.getString("ConnectionDialog.startButton", getLocale()); //$NON-NLS-1$
+		if (!this.connectionHasStarted) return MessageFormat.format(MessagesPack.getString("ConnectionDialog.error.processNotStarted", getLocale()),btnName); //$NON-NLS-1$
 		return null;
 	}
 
@@ -90,11 +92,11 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 				try {
 					data.getSession().unlink();
 					info = data.getSession().getAuthInfo();
-					Browser.show(new URI(info.url), window, Messages.getString("ConnectionDialog.error.unableToLaunchBrowser.title")); //$NON-NLS-1$
+					Browser.show(new URI(info.url), window, MessagesPack.getString("ConnectionDialog.error.unableToLaunchBrowser.title", getLocale())); //$NON-NLS-1$
 					connectionHasStarted = true;
 				} catch (Throwable e) {
 					e.printStackTrace();
-					AbstractURIChooserPanel.showError(window, Messages.getString("ConnectionDialog.error.unableToLaunchBrowser.message")); //$NON-NLS-1$
+					AbstractURIChooserPanel.showError(window, MessagesPack.getString("ConnectionDialog.error.unableToLaunchBrowser.message", getLocale()), getLocale()); //$NON-NLS-1$
 				}
 				connectButton.setEnabled(false);
 				updateOkButtonEnabled();
@@ -105,8 +107,8 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 	
 	private JButton getConnectButton() {
 		if (connectButton==null) {
-			connectButton = new JButton(Messages.getString("ConnectionDialog.startButton")); //$NON-NLS-1$
-			connectButton.setToolTipText(Messages.getString("ConnectionDialog.startButton.tooltip")); //$NON-NLS-1$
+			connectButton = new JButton(MessagesPack.getString("ConnectionDialog.startButton", getLocale())); //$NON-NLS-1$
+			connectButton.setToolTipText(MessagesPack.getString("ConnectionDialog.startButton.tooltip", getLocale())); //$NON-NLS-1$
 		}
 		return connectButton;
 	}
