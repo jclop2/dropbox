@@ -65,7 +65,7 @@ class ConnectionPanel extends JPanel {
 	
 	private JLabel getLblNewLabel() {
 		if (lblNewLabel == null) {
-			String message = MessagesPack.getString("ConnectionDialog.message.content", getLocale()); //$NON-NLS-1$
+			String message = MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.message.content", getLocale()); //$NON-NLS-1$
 			message = MessageFormat.format(message, getConnectButtonName(), okButtonName);
 			lblNewLabel = new JLabel();
 			lblNewLabel.setText(message);
@@ -74,12 +74,12 @@ class ConnectionPanel extends JPanel {
 	}
 
 	String getConnectButtonName() {
-		return MessagesPack.getString("ConnectionDialog.startButton", getLocale()); //$NON-NLS-1$
+		return MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.startButton", getLocale()); //$NON-NLS-1$
 	}
 	
 	private JLabel getTextArea() {
 		if (textArea == null) {
-			textArea = new JLabel(MessagesPack.getString("ConnectionDialog.message.header", getLocale()));  //$NON-NLS-1$
+			textArea = new JLabel(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.message.header", getLocale()));  //$NON-NLS-1$
 		}
 		return textArea;
 	}

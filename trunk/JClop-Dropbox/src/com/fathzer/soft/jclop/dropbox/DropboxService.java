@@ -23,7 +23,7 @@ import com.fathzer.soft.jclop.Cancellable;
 import com.fathzer.soft.jclop.Entry;
 import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
-import com.fathzer.soft.jclop.dropbox.swing.MessagesPack;
+import com.fathzer.soft.jclop.dropbox.swing.MessagePack;
 
 import net.astesana.ajlib.utilities.StringUtils;
 
@@ -119,7 +119,7 @@ public class DropboxService extends Service {
 	    long totalSize = -1;
 	    if (task!=null) {
 	    	totalSize = api.metadata(path, 0, null, false, null).bytes;
-	    	task.setPhase(MessagesPack.getString("dropbox.downloading", locale), totalSize>0?100:-1); //$NON-NLS-1$
+	    	task.setPhase(MessagePack.getString("com.fathzer.soft.jclop.dropbox.downloading", locale), totalSize>0?100:-1); //$NON-NLS-1$
 	    }
 	    DropboxInputStream dropboxStream = api.getFileStream(path, null);
 			try {
@@ -157,7 +157,7 @@ public class DropboxService extends Service {
 	@Override
 	public boolean upload(InputStream in, long length, Entry entry, Cancellable task, Locale locale) throws IOException {
 		try {
-	    if (task!=null) task.setPhase(MessagesPack.getString("dropbox.uploading", locale), -1); //$NON-NLS-1$
+	    if (task!=null) task.setPhase(MessagePack.getString("com.fathzer.soft.jclop.dropbox.uploading", locale), -1); //$NON-NLS-1$
 
 			// This implementation uses ChunkedUploader to allow the user to cancel the upload
 			// It has a major trap:
