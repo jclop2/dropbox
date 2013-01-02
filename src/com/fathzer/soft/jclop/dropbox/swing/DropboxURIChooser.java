@@ -28,12 +28,12 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 	}
 	
 	protected String getRemoteConnectingWording() {
-		return MessagesPack.getString("connecting", getLocale()); //$NON-NLS-1$
+		return MessagePack.getString("com.fathzer.soft.jclop.dropbox.connecting", getLocale()); //$NON-NLS-1$
 	}
 
 	@Override
 	public String getTooltip(boolean save) {
-		return save?MessagesPack.getString("save.tabTooltip", getLocale()):MessagesPack.getString("read.tabTooltip", getLocale()); //$NON-NLS-1$ //$NON-NLS-2$
+		return save?MessagePack.getString("com.fathzer.soft.jclop.dropbox.save.tabTooltip", getLocale()):MessagePack.getString("com.fathzer.soft.jclop.dropbox.read.tabTooltip", getLocale()); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	@Override
