@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.MissingResourceException;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DropboxInputStream;
@@ -23,7 +25,7 @@ import com.fathzer.soft.jclop.Cancellable;
 import com.fathzer.soft.jclop.Entry;
 import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
-import com.fathzer.soft.jclop.dropbox.swing.MessagePack;
+import com.fathzer.soft.jclop.swing.MessagePack;
 
 import net.astesana.ajlib.utilities.StringUtils;
 
@@ -89,7 +91,7 @@ public class DropboxService extends Service {
 			return result;
 		} catch (DropboxException e) {
 			Throwable cause = e.getCause();
-			if (cause instanceof UnknownHostException) {
+			if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
 				throw new UnreachableHostException();
 			} else {
 				//FIXME
@@ -119,7 +121,7 @@ public class DropboxService extends Service {
 	    long totalSize = -1;
 	    if (task!=null) {
 	    	totalSize = api.metadata(path, 0, null, false, null).bytes;
-	    	task.setPhase(MessagePack.getString("com.fathzer.soft.jclop.dropbox.downloading", locale), totalSize>0?100:-1); //$NON-NLS-1$
+	    	task.setPhase(getMessage(MessagePack.DOWNLOADING, locale), totalSize>0?100:-1); //$NON-NLS-1$
 	    }
 	    DropboxInputStream dropboxStream = api.getFileStream(path, null);
 			try {
@@ -157,7 +159,7 @@ public class DropboxService extends Service {
 	@Override
 	public boolean upload(InputStream in, long length, Entry entry, Cancellable task, Locale locale) throws IOException {
 		try {
-	    if (task!=null) task.setPhase(MessagePack.getString("com.fathzer.soft.jclop.dropbox.uploading", locale), -1); //$NON-NLS-1$
+	    if (task!=null) task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
 
 			// This implementation uses ChunkedUploader to allow the user to cancel the upload
 			// It has a major trap:
@@ -246,6 +248,20 @@ public class DropboxService extends Service {
 			}
 		} catch (DropboxException e) {
 			throw new IOException(e);
+		}
+	}
+	
+	public String getMessage(String key, Locale locale) {
+		try {
+//System.out.print ("Looking for "+key);
+			String serviceKey = getClass().getPackage().getName() + key.substring(MessagePack.KEY_PREFIX.length());
+//System.out.print (" customizedkey is "+serviceKey);
+			String result = com.fathzer.soft.jclop.dropbox.swing.MessagePack.getString(serviceKey, locale);
+//System.out.println ("-> customized found");
+			return result;
+		} catch (MissingResourceException e) {
+//System.out.println ("-> get default");
+			return MessagePack.DEFAULT.getString(key, locale);
 		}
 	}
 }
