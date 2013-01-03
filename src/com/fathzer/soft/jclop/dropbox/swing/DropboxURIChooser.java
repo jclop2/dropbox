@@ -26,10 +26,6 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 		com.dropbox.client2.DropboxAPI.Account accountInfo = connectionDialog.getAccountInfo();
 		return new Account(getService(), Long.toString(accountInfo.uid), accountInfo.displayName, pair, accountInfo.quota, accountInfo.quotaNormal+accountInfo.quotaShared);
 	}
-	
-	protected String getRemoteConnectingWording() {
-		return MessagePack.getString("com.fathzer.soft.jclop.dropbox.connecting", getLocale()); //$NON-NLS-1$
-	}
 
 	@Override
 	public String getTooltip(boolean save) {
