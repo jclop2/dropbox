@@ -18,11 +18,13 @@ import com.dropbox.client2.DropboxAPI.DropboxInputStream;
 import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
+import com.dropbox.client2.exception.DropboxUnlinkedException;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.WebAuthSession;
 import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.Cancellable;
 import com.fathzer.soft.jclop.Entry;
+import com.fathzer.soft.jclop.InvalidConnectionDataException;
 import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
 import com.fathzer.soft.jclop.swing.MessagePack;
@@ -60,6 +62,7 @@ public class DropboxService extends Service {
 				}
 			}
 			session.setAccessTokenPair((AccessTokenPair) account.getConnectionData());
+//To test invalid connection data			session.setAccessTokenPair(new AccessTokenPair("kjhhl","jkljmkl")); //FIXME
 		}
 		return this.api;
 	}
@@ -70,7 +73,7 @@ public class DropboxService extends Service {
 	}
 	
 	@Override
-	public Collection<Entry> getRemoteEntries(Account account, Cancellable task) throws UnreachableHostException {
+	public Collection<Entry> getRemoteEntries(Account account, Cancellable task) throws UnreachableHostException, InvalidConnectionDataException {
 		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(account);
 		try {
 			// Refresh the quota data
@@ -89,6 +92,9 @@ public class DropboxService extends Service {
 				}
 			}
 			return result;
+		} catch (DropboxUnlinkedException e) {
+			// The connection data correspond to no valid account
+			throw new InvalidConnectionDataException();
 		} catch (DropboxException e) {
 			Throwable cause = e.getCause();
 			if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
