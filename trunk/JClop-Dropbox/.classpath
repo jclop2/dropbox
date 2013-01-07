@@ -6,7 +6,7 @@
 	<classpathentry kind="var" path="HTTP-CORE"/>
 	<classpathentry kind="var" path="HTTP-MIME"/>
 	<classpathentry kind="var" path="JSON-SIMPLE"/>
-	<classpathentry kind="var" path="DROPBOX/lib/dropbox-java-sdk-1.5.3.jar" sourcepath="/DROPBOX/src/main/java"/>
+	<classpathentry kind="var" path="DROPBOX" sourcepath="/DROPBOX/src/main/java"/>
 	<classpathentry kind="var" path="COMMONS-LOGGING"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/A-JLib"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/JClop"/>
