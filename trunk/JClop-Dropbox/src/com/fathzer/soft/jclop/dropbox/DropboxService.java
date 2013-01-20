@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.NoRouteToHostException;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -120,7 +121,8 @@ public class DropboxService extends Service {
 	}
 	
 	@Override
-	public boolean download(Entry entry, OutputStream out, Cancellable task, Locale locale) throws IOException {
+	public boolean download(URI uri, OutputStream out, Cancellable task, Locale locale) throws IOException {
+		Entry entry = getEntry(uri);
 		try {
 			String path = getRemotePath(entry);
 			api = getDropboxAPI(entry.getAccount());
@@ -163,7 +165,8 @@ public class DropboxService extends Service {
 	}
 
 	@Override
-	public boolean upload(InputStream in, long length, Entry entry, Cancellable task, Locale locale) throws IOException {
+	public boolean upload(InputStream in, long length, URI uri, Cancellable task, Locale locale) throws IOException {
+		Entry entry = getEntry(uri);
 		try {
 	    if (task!=null) task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
 
@@ -201,7 +204,7 @@ public class DropboxService extends Service {
 	    } finally {
 	    	if (task!=null) task.setCancelAction(null);
 	    }
-			String parentRev = task!=null && task.isCancelled()?null:getRemoteRevision(entry);
+			String parentRev = task!=null && task.isCancelled()?null:getRemoteRevision(uri);
 			boolean result = task==null || !task.isCancelled();
 			if (result) {
 				uploader.finish(getRemotePath(entry), parentRev);
@@ -240,7 +243,8 @@ public class DropboxService extends Service {
 		}
 	}
 	
-	public String getRemoteRevision(Entry entry) throws IOException {
+	public String getRemoteRevision(URI uri) throws IOException {
+		Entry entry = getEntry(uri);
 		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(entry.getAccount());
 		try {
 			com.dropbox.client2.DropboxAPI.Entry metadata = api.metadata(getRemotePath(entry), 1, null, true, null);
