@@ -26,13 +26,13 @@ import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.Cancellable;
 import com.fathzer.soft.jclop.Entry;
 import com.fathzer.soft.jclop.InvalidConnectionDataException;
-import com.fathzer.soft.jclop.CloudService;
+import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
 import com.fathzer.soft.jclop.swing.MessagePack;
 
 import net.astesana.ajlib.utilities.StringUtils;
 
-public class DropboxService extends CloudService {
+public class DropboxService extends Service {
 	private static final int WAIT_DELAY = 30;
 	private static final boolean SLOW_READING = Boolean.getBoolean("slowDataReading"); //$NON-NLS-1$
 	
@@ -41,7 +41,7 @@ public class DropboxService extends CloudService {
 	private DropboxAPI<? extends WebAuthSession> api;
 
 	public DropboxService(File root, DropboxAPI<? extends WebAuthSession> api) {
-		super(root);
+		super(root, false);
 		this.api = api;
 	}
 
