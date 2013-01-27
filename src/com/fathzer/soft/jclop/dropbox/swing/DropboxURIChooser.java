@@ -12,7 +12,12 @@ import net.astesana.ajlib.swing.Utils;
 
 @SuppressWarnings("serial")
 public class DropboxURIChooser extends AbstractURIChooserPanel {
-
+	private static final String TITLE;
+	
+	static {
+		TITLE = DropboxService.URI_SCHEME.substring(0, 1).toUpperCase() +  DropboxService.URI_SCHEME.substring(1);
+	}
+	
 	public DropboxURIChooser(DropboxService service) {
 		super(service);
 	}
@@ -35,5 +40,13 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 	@Override
 	public Icon getIcon() {
 		return new ImageIcon(DropboxURIChooser.class.getResource("dropbox.png")); //$NON-NLS-1$
+	}
+
+	/* (non-Javadoc)
+	 * @see com.fathzer.soft.jclop.swing.AbstractURIChooserPanel#getTitle()
+	 */
+	@Override
+	public String getTitle() {
+		return TITLE;
 	}
 }
