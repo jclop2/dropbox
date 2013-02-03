@@ -17,6 +17,7 @@ import java.util.MissingResourceException;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DropboxInputStream;
 import com.dropbox.client2.exception.DropboxException;
+import com.dropbox.client2.exception.DropboxParseException;
 import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
@@ -25,7 +26,9 @@ import com.dropbox.client2.session.WebAuthSession;
 import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.Cancellable;
 import com.fathzer.soft.jclop.Entry;
+import com.fathzer.soft.jclop.HostErrorException;
 import com.fathzer.soft.jclop.InvalidConnectionDataException;
+import com.fathzer.soft.jclop.JClopException;
 import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
 import com.fathzer.soft.jclop.swing.MessagePack;
@@ -74,7 +77,7 @@ public class DropboxService extends Service {
 	}
 	
 	@Override
-	public Collection<Entry> getRemoteEntries(Account account, Cancellable task) throws UnreachableHostException, InvalidConnectionDataException {
+	public Collection<Entry> getRemoteEntries(Account account, Cancellable task) throws JClopException {
 		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(account);
 		try {
 			// Refresh the quota data
@@ -93,18 +96,26 @@ public class DropboxService extends Service {
 				}
 			}
 			return result;
-		} catch (DropboxUnlinkedException e) {
-			// The connection data correspond to no valid account
-			throw new InvalidConnectionDataException();
 		} catch (DropboxException e) {
-			Throwable cause = e.getCause();
-			if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
-				throw new UnreachableHostException();
-			} else {
-				//FIXME
-				e.printStackTrace();
-				throw new RuntimeException(cause);
-			}
+			throw getException(e);
+		}
+	}
+
+	private JClopException getException(DropboxException e) throws InvalidConnectionDataException, UnreachableHostException {
+		if (e instanceof DropboxUnlinkedException) {
+			// The connection data correspond to no valid account
+			return new InvalidConnectionDataException();
+		} else if (e instanceof DropboxParseException) {
+			// The server returned a request that the Dropbox API was not able to parse -> The server is crashed
+			return new HostErrorException();
+		}
+		Throwable cause = e.getCause();
+		if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
+			return new UnreachableHostException();
+		} else {
+			//FIXME
+			e.printStackTrace();
+			throw new RuntimeException(cause);
 		}
 	}
 
@@ -121,7 +132,7 @@ public class DropboxService extends Service {
 	}
 	
 	@Override
-	public boolean download(URI uri, OutputStream out, Cancellable task, Locale locale) throws IOException {
+	public boolean download(URI uri, OutputStream out, Cancellable task, Locale locale) throws JClopException, IOException {
 		Entry entry = getEntry(uri);
 		try {
 			String path = getRemotePath(entry);
@@ -160,12 +171,12 @@ public class DropboxService extends Service {
 				dropboxStream.close();
 			}
 		} catch (DropboxException e) {
-			throw new IOException(e);
+			throw getException(e);
 		}
 	}
 
 	@Override
-	public boolean upload(InputStream in, long length, URI uri, Cancellable task, Locale locale) throws IOException {
+	public boolean upload(InputStream in, long length, URI uri, Cancellable task, Locale locale) throws JClopException, IOException {
 		Entry entry = getEntry(uri);
 		try {
 	    if (task!=null) task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
@@ -201,6 +212,8 @@ public class DropboxService extends Service {
 			} catch (DropboxPartialFileException e) {
 				// Upload was cancelled
 				return false;
+			} catch (DropboxException e) {
+				throw getException(e);
 	    } finally {
 	    	if (task!=null) task.setCancelAction(null);
 	    }
@@ -243,7 +256,8 @@ public class DropboxService extends Service {
 		}
 	}
 	
-	public String getRemoteRevision(URI uri) throws IOException {
+	@Override
+	public String getRemoteRevision(URI uri) throws JClopException {
 		Entry entry = getEntry(uri);
 		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(entry.getAccount());
 		try {
@@ -254,10 +268,10 @@ public class DropboxService extends Service {
 			if (e.error==DropboxServerException._404_NOT_FOUND) {
 				return null;
 			} else {
-				throw new IOException(e);
+				throw getException(e);
 			}
 		} catch (DropboxException e) {
-			throw new IOException(e);
+			throw getException(e);
 		}
 	}
 	
