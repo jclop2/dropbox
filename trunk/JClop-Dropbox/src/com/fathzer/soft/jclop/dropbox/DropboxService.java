@@ -17,6 +17,7 @@ import java.util.MissingResourceException;
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DropboxInputStream;
 import com.dropbox.client2.exception.DropboxException;
+import com.dropbox.client2.exception.DropboxIOException;
 import com.dropbox.client2.exception.DropboxParseException;
 import com.dropbox.client2.exception.DropboxPartialFileException;
 import com.dropbox.client2.exception.DropboxServerException;
@@ -108,6 +109,8 @@ public class DropboxService extends Service {
 		} else if (e instanceof DropboxParseException) {
 			// The server returned a request that the Dropbox API was not able to parse -> The server is crashed
 			return new HostErrorException();
+		} else if (e instanceof DropboxIOException) {
+			return new UnreachableHostException();
 		}
 		Throwable cause = e.getCause();
 		if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
