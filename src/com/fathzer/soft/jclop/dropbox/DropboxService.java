@@ -67,7 +67,6 @@ public class DropboxService extends Service {
 				}
 			}
 			session.setAccessTokenPair((AccessTokenPair) account.getConnectionData());
-//To test invalid connection data			session.setAccessTokenPair(new AccessTokenPair("kjhhl","jkljmkl")); //FIXME
 		}
 		return this.api;
 	}
@@ -116,8 +115,6 @@ public class DropboxService extends Service {
 		if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
 			return new UnreachableHostException();
 		} else {
-			//FIXME
-			e.printStackTrace();
 			throw new RuntimeException(cause);
 		}
 	}
@@ -254,8 +251,7 @@ public class DropboxService extends Service {
 			return true;
 /**/
 		} catch (DropboxException e) {
-			System.err.println ("Dropbox Exception !!!");//TODO
-			throw new IOException(e);
+			throw getException(e);
 		}
 	}
 	
