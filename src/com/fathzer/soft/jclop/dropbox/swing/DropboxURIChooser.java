@@ -1,5 +1,8 @@
 package com.fathzer.soft.jclop.dropbox.swing;
 
+import java.awt.Window;
+import java.io.IOException;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -23,13 +26,26 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 	}
 
 	@Override
-	protected Account createNewAccount() {
-		ConnectionDialog connectionDialog = new ConnectionDialog(Utils.getOwnerWindow(this), ((DropboxService)getService()).getDropboxAPI(null), getLocale());
+	protected Account createNewAccount() throws IOException {
+		Window owner = Utils.getOwnerWindow(this);
+		ConnectionDialog connectionDialog = new ConnectionDialog(owner, ((DropboxService)getService()).getDropboxAPI(null), getLocale());
 		connectionDialog.setVisible(true);
 		AccessTokenPair pair = connectionDialog.getResult();
 		if (pair==null) return null;
 		com.dropbox.client2.DropboxAPI.Account accountInfo = connectionDialog.getAccountInfo();
-		return new Account(getService(), Long.toString(accountInfo.uid), accountInfo.displayName, pair, accountInfo.quota, accountInfo.quotaNormal+accountInfo.quotaShared);
+		String id = Long.toString(accountInfo.uid);
+		Account account = getService().getAccount(id);
+		if (account==null) {
+			// This is a new account
+			account = getService().newAccount(id, accountInfo.displayName, pair);
+		} else {
+			// This is an existing account => update it
+			account.setDisplayName(accountInfo.displayName);
+			account.setConnectionData(pair);
+		}
+		account.setQuota(accountInfo.quota);
+		account.setUsed(accountInfo.quotaNormal+accountInfo.quotaShared);
+		return account;
 	}
 
 	@Override
