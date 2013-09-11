@@ -47,9 +47,6 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 		return pair;
 	}
 	
-	/* (non-Javadoc)
-	 * @see net.astesana.ajlib.swing.dialog.AbstractDialog#confirm()
-	 */
 	@Override
 	protected void confirm() {
 		try {
@@ -76,9 +73,6 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see net.astesana.ajlib.swing.dialog.AbstractDialog#createButtonsPane()
-	 */
 	@Override
 	protected JPanel createButtonsPane() {
 		JPanel panel = new JPanel();
