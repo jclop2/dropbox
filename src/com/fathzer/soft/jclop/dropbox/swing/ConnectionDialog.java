@@ -17,11 +17,11 @@ import com.dropbox.client2.exception.DropboxUnlinkedException;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.WebAuthSession;
 import com.dropbox.client2.session.WebAuthSession.WebAuthInfo;
+import com.fathzer.soft.ajlib.swing.Browser;
+import com.fathzer.soft.ajlib.swing.Utils;
+import com.fathzer.soft.ajlib.swing.dialog.AbstractDialog;
 import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
 
-import net.astesana.ajlib.swing.Browser;
-import net.astesana.ajlib.swing.Utils;
-import net.astesana.ajlib.swing.dialog.AbstractDialog;
 
 @SuppressWarnings("serial")
 public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAuthSession>, AccessTokenPair> {

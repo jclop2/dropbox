@@ -24,6 +24,7 @@ import com.dropbox.client2.exception.DropboxServerException;
 import com.dropbox.client2.exception.DropboxUnlinkedException;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.WebAuthSession;
+import com.fathzer.soft.ajlib.utilities.StringUtils;
 import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.Cancellable;
 import com.fathzer.soft.jclop.Entry;
@@ -34,7 +35,6 @@ import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
 import com.fathzer.soft.jclop.swing.MessagePack;
 
-import net.astesana.ajlib.utilities.StringUtils;
 
 public class DropboxService extends Service {
 	private static final int WAIT_DELAY = 30;
