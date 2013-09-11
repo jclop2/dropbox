@@ -6,11 +6,11 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import com.dropbox.client2.session.AccessTokenPair;
+import com.fathzer.soft.ajlib.swing.Utils;
 import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.dropbox.DropboxService;
 import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
 
-import net.astesana.ajlib.swing.Utils;
 
 @SuppressWarnings("serial")
 public class DropboxURIChooser extends AbstractURIChooserPanel {
