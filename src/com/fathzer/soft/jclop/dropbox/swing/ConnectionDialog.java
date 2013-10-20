@@ -88,6 +88,7 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 					try {
 						info = data.getSession().getAuthInfo();
 					} catch (Throwable e) {
+						if (e.getCause()!=null) e = e.getCause();
 						AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.connectionFailed", getLocale()), getLocale()); //$NON-NLS-1$
 						return;
 					}
