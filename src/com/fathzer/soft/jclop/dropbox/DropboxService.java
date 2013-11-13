@@ -115,7 +115,7 @@ public class DropboxService extends Service {
 		if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
 			return new UnreachableHostException();
 		} else {
-			throw new RuntimeException(cause);
+			throw new RuntimeException(e);
 		}
 	}
 
