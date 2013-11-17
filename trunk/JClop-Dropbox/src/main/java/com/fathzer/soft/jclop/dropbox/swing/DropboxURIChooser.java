@@ -30,7 +30,9 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 		ConnectionDialog connectionDialog = new ConnectionDialog(owner, ((DropboxService)getService()).getDropboxAPI(null), getLocale());
 		connectionDialog.setVisible(true);
 		AccessTokenPair pair = connectionDialog.getResult();
-		if (pair==null) return null;
+		if (pair==null) {
+			return null;
+		}
 		com.dropbox.client2.DropboxAPI.Account accountInfo = connectionDialog.getAccountInfo();
 		String id = Long.toString(accountInfo.uid);
 		Account account = getService().getAccount(id);

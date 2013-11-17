@@ -85,14 +85,18 @@ public class DropboxService extends Service {
 			account.setQuota(accountInfo.quota);
 			account.setUsed(accountInfo.quotaNormal+accountInfo.quotaShared);
 			
-			if (task.isCancelled()) return null;
+			if (task.isCancelled()) {
+				return null;
+			}
 			// Get the remote files list //FIXME The following line will hang if content has more than 2500 entries
 			List<com.dropbox.client2.DropboxAPI.Entry> contents = api.metadata("", 0, null, true, null).contents; //$NON-NLS-1$
 			Collection<Entry> result = new ArrayList<Entry>();
 			for (com.dropbox.client2.DropboxAPI.Entry entry : contents) {
 				if (!entry.isDeleted) {
 					Entry jclopEntry = getRemoteEntry(account, entry.fileName());
-					if (jclopEntry!=null) result.add(jclopEntry);
+					if (jclopEntry!=null) {
+						result.add(jclopEntry);
+					}
 				}
 			}
 			return result;
@@ -132,23 +136,24 @@ public class DropboxService extends Service {
 	}
 	
 	@Override
-	public boolean download(URI uri, OutputStream out, Cancellable task, Locale locale) throws JClopException, IOException {
+	public boolean download(URI uri, OutputStream out, Cancellable task,
+			Locale locale) throws JClopException, IOException {
 		Entry entry = getEntry(uri);
 		try {
 			String path = getRemotePath(entry);
 			api = getDropboxAPI(entry.getAccount());
-	    long totalSize = -1;
-	    if (task!=null) {
-	    	totalSize = api.metadata(path, 0, null, false, null).bytes;
-	    	task.setPhase(getMessage(MessagePack.DOWNLOADING, locale), totalSize>0?100:-1); //$NON-NLS-1$
-	    }
-	    DropboxInputStream dropboxStream = api.getFileStream(path, null);
+			long totalSize = -1;
+			if (task != null) {
+				totalSize = api.metadata(path, 0, null, false, null).bytes;
+				task.setPhase(getMessage(MessagePack.DOWNLOADING, locale),
+						totalSize > 0 ? 100 : -1); //$NON-NLS-1$
+			}
+			DropboxInputStream dropboxStream = api.getFileStream(path, null);
 			try {
-		    // Transfer bytes from the file to the output file
-		    byte[] buf = new byte[1024];
-		    int len;
-		    long red = 0;
-				while ((len = dropboxStream.read(buf)) > 0) {
+				// Transfer bytes from the file to the output file
+				byte[] buf = new byte[1024];
+				long red = 0;
+				for (int len = dropboxStream.read(buf);  len > 0; len = dropboxStream.read(buf)) {
 					out.write(buf, 0, len);
 					if (SLOW_READING) {
 						try {
@@ -158,7 +163,9 @@ public class DropboxService extends Service {
 						}
 					}
 					if (task != null) {
-						if (task.isCancelled()) return false;
+						if (task.isCancelled()) {
+							return false;
+						}
 						if (totalSize > 0) {
 							red += len;
 							int progress = (int) (red * 100 / totalSize);
@@ -166,7 +173,7 @@ public class DropboxService extends Service {
 						}
 					}
 				}
-		    return true;
+				return true;
 			} finally {
 				dropboxStream.close();
 			}
@@ -176,32 +183,42 @@ public class DropboxService extends Service {
 	}
 
 	@Override
-	public boolean upload(InputStream in, long length, URI uri, Cancellable task, Locale locale) throws JClopException, IOException {
+	public boolean upload(InputStream in, long length, URI uri,
+			Cancellable task, Locale locale) throws JClopException, IOException {
 		Entry entry = getEntry(uri);
 		try {
-	    if (task!=null) task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
+			if (task != null) {
+				task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
+			}
 
-			// This implementation uses ChunkedUploader to allow the user to cancel the upload
+			// This implementation uses ChunkedUploader to allow the user to
+			// cancel the upload
 			// It has a major trap:
-			// It seems that each chunk requires a new connection to Dropbox. On some network configuration (with very slow proxy)
-			//   this dramatically slows down the upload. We use a chunck size equals to the file size to prevent having such a problem.
-			//   For that reason, the task will never been informed of the upload progress.
-	    final DropboxAPI<? extends WebAuthSession>.ChunkedUploader uploader = getDropboxAPI(entry.getAccount()).getChunkedUploader(in, length);
-	    if (task!=null) {
-		    task.setCancelAction(new Runnable() {
+			// It seems that each chunk requires a new connection to Dropbox. On
+			// some network configuration (with very slow proxy)
+			// this dramatically slows down the upload. We use a chunck size
+			// equals to the file size to prevent having such a problem.
+			// For that reason, the task will never been informed of the upload
+			// progress.
+			final DropboxAPI<? extends WebAuthSession>.ChunkedUploader uploader = getDropboxAPI(
+					entry.getAccount()).getChunkedUploader(in, length);
+			if (task != null) {
+				task.setCancelAction(new Runnable() {
 					@Override
 					public void run() {
 						uploader.abort();
 					}
-		    });
-	    }
+				});
+			}
 			try {
 				int retryCounter = 0;
 				while (!uploader.isComplete()) {
 					try {
 						uploader.upload();
 					} catch (DropboxException e) {
-						if (retryCounter > 5) throw e; // Give up after a while.
+						if (retryCounter > 5) {
+							throw e; // Give up after a while.
+						}
 						retryCounter++;
 						try {
 							Thread.sleep(1000);
@@ -214,11 +231,13 @@ public class DropboxService extends Service {
 				return false;
 			} catch (DropboxException e) {
 				throw getException(e);
-	    } finally {
-	    	if (task!=null) task.setCancelAction(null);
-	    }
-			String parentRev = task!=null && task.isCancelled()?null:getRemoteRevision(uri);
-			boolean result = task==null || !task.isCancelled();
+			} finally {
+				if (task != null) {
+					task.setCancelAction(null);
+				}
+			}
+			String parentRev = task != null && task.isCancelled() ? null : getRemoteRevision(uri);
+			boolean result = task == null || !task.isCancelled();
 			if (result) {
 				uploader.finish(getRemotePath(entry), parentRev);
 			} else {
@@ -226,30 +245,27 @@ public class DropboxService extends Service {
 			}
 			return result;
 
-/*
-	    // Here is an implementation that do not use chunckedUploader
-			// Its major problems are:
-			// - It is not possible to cancel the upload before it is completed
-			// - When the upload is cancelled, the Dropbox file is reverted to its previous version but it's revision is incremented
-			//   This causes the synchronization process to consider the file has been modified after the upload
-			if (task!=null) task.setPhase(LocalizationData.get("dropbox.uploading"), -1); //$NON-NLS-1$
-			// As this implementation doesn't allow to cancel during the upload, we will remember what was the file state
-			String previous = getRemoteRevision(uri);
-			Dropbox.getAPI().putFileOverwrite(path, stream, length, null);
-			if (task!=null && task.isCancelled()) {
-				// The upload was cancelled
-				if (previous==null) {
-					// The file do not existed before, delete it
-					Dropbox.getAPI().delete(path);
-				} else {
-					// Revert to the previous version
-					// Unfortunately, this not really revert to the previous state as it creates a new revision on Dropbox
-					Dropbox.getAPI().restore(path, previous);
-				}
-				return false;
-			}
-			return true;
-/**/
+			/*
+			 * // Here is an implementation that do not use chunckedUploader //
+			 * Its major problems are: // - It is not possible to cancel the
+			 * upload before it is completed // - When the upload is cancelled,
+			 * the Dropbox file is reverted to its previous version but it's
+			 * revision is incremented // This causes the synchronization
+			 * process to consider the file has been modified after the upload
+			 * if (task!=null)
+			 * task.setPhase(LocalizationData.get("dropbox.uploading"), -1);
+			 * //$NON-NLS-1$ // As this implementation doesn't allow to cancel
+			 * during the upload, we will remember what was the file state
+			 * String previous = getRemoteRevision(uri);
+			 * Dropbox.getAPI().putFileOverwrite(path, stream, length, null); if
+			 * (task!=null && task.isCancelled()) { // The upload was cancelled
+			 * if (previous==null) { // The file do not existed before, delete
+			 * it Dropbox.getAPI().delete(path); } else { // Revert to the
+			 * previous version // Unfortunately, this not really revert to the
+			 * previous state as it creates a new revision on Dropbox
+			 * Dropbox.getAPI().restore(path, previous); } return false; }
+			 * return true; /*
+			 */
 		} catch (DropboxException e) {
 			throw getException(e);
 		}
@@ -261,8 +277,11 @@ public class DropboxService extends Service {
 		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(entry.getAccount());
 		try {
 			com.dropbox.client2.DropboxAPI.Entry metadata = api.metadata(getRemotePath(entry), 1, null, true, null);
-			if (metadata.isDeleted) return null;
-			return metadata.rev;
+			if (metadata.isDeleted) {
+				return null;
+			} else {
+				return metadata.rev;
+			}
 		} catch (DropboxServerException e) {
 			if (e.error==DropboxServerException._404_NOT_FOUND) {
 				return null;

@@ -37,7 +37,7 @@ public abstract class AuthenticatedProxiedSession extends WebAuthSession {
 	private HttpHost getProxy() {
 		ProxyInfo proxyInfo = getProxyInfo();
 		HttpHost proxy = null;
-		if (proxyInfo != null && proxyInfo.host != null && !proxyInfo.host.equals("")) {
+		if ((proxyInfo != null) && (proxyInfo.host != null) && !"".equals(proxyInfo.host)) {
 			if (proxyInfo.port < 0) {
 				proxy = new HttpHost(proxyInfo.host);
 			} else {
