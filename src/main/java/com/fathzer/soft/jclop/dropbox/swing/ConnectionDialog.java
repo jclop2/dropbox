@@ -10,6 +10,8 @@ import java.util.Locale;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import org.slf4j.LoggerFactory;
+
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.Account;
 import com.dropbox.client2.exception.DropboxException;
@@ -69,7 +71,9 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 	@Override
 	protected String getOkDisabledCause() {
 		String btnName = MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.startButton", getLocale()); //$NON-NLS-1$
-		if (!this.connectionHasStarted) return MessageFormat.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()),btnName); //$NON-NLS-1$
+		if (!this.connectionHasStarted) {
+			return MessageFormat.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()),btnName); //$NON-NLS-1$
+		}
 		return null;
 	}
 
@@ -87,14 +91,15 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 					data.getSession().unlink();
 					try {
 						info = data.getSession().getAuthInfo();
-					} catch (Throwable e) {
-						if (e.getCause()!=null) e = e.getCause();
+					} catch (Exception e) {
+						LoggerFactory.getLogger(getClass()).warn("Error while getting Authentication info", e);
 						AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.connectionFailed", getLocale()), getLocale()); //$NON-NLS-1$
 						return;
 					}
 					Browser.show(new URI(info.url), window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", getLocale())); //$NON-NLS-1$
 					connectionHasStarted = true;
-				} catch (Throwable e) {
+				} catch (Exception e) {
+					LoggerFactory.getLogger(getClass()).warn("Error while unlinking Dropbox session", e);
 					AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.message", getLocale()), getLocale()); //$NON-NLS-1$
 				}
 				connectButton.setEnabled(false);
