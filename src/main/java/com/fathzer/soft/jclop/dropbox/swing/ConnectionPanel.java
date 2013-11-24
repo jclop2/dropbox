@@ -19,7 +19,7 @@ class ConnectionPanel extends JPanel {
 	public static final String STATE_PROPERTY = "State"; //$NON-NLS-1$
 	
 	private JLabel lblNewLabel;
-	private JLabel lblNewLabel_1;
+	private JLabel lblNewLabel1;
 	private JLabel textArea;
 
 	private String okButtonName;
@@ -32,35 +32,35 @@ class ConnectionPanel extends JPanel {
 		this.okButtonName = okButtonName;
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		setLayout(gridBagLayout);
-		GridBagConstraints gbc_lblNewLabel_1 = new GridBagConstraints();
-		gbc_lblNewLabel_1.fill = GridBagConstraints.HORIZONTAL;
-		gbc_lblNewLabel_1.anchor = GridBagConstraints.WEST;
-		gbc_lblNewLabel_1.insets = new Insets(0, 0, 5, 5);
-		gbc_lblNewLabel_1.gridx = 0;
-		gbc_lblNewLabel_1.gridy = 0;
-		add(getLblNewLabel_1(), gbc_lblNewLabel_1);
-		GridBagConstraints gbc_textArea = new GridBagConstraints();
-		gbc_textArea.fill = GridBagConstraints.HORIZONTAL;
-		gbc_textArea.weightx = 1.0;
-		gbc_textArea.insets = new Insets(0, 0, 5, 0);
-		gbc_textArea.gridx = 1;
-		gbc_textArea.gridy = 0;
-		add(getTextArea(), gbc_textArea);
-		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
-		gbc_lblNewLabel.gridwidth = 0;
-		gbc_lblNewLabel.fill = GridBagConstraints.HORIZONTAL;
-		gbc_lblNewLabel.weightx = 1.0;
-		gbc_lblNewLabel.insets = new Insets(5, 5, 5, 5);
-		gbc_lblNewLabel.gridx = 0;
-		gbc_lblNewLabel.gridy = 1;
-		add(getLblNewLabel(), gbc_lblNewLabel);
+		GridBagConstraints gbcLblNewLabel1 = new GridBagConstraints();
+		gbcLblNewLabel1.fill = GridBagConstraints.HORIZONTAL;
+		gbcLblNewLabel1.anchor = GridBagConstraints.WEST;
+		gbcLblNewLabel1.insets = new Insets(0, 0, 5, 5);
+		gbcLblNewLabel1.gridx = 0;
+		gbcLblNewLabel1.gridy = 0;
+		add(getLblNewLabel1(), gbcLblNewLabel1);
+		GridBagConstraints gbcTextArea = new GridBagConstraints();
+		gbcTextArea.fill = GridBagConstraints.HORIZONTAL;
+		gbcTextArea.weightx = 1.0;
+		gbcTextArea.insets = new Insets(0, 0, 5, 0);
+		gbcTextArea.gridx = 1;
+		gbcTextArea.gridy = 0;
+		add(getTextArea(), gbcTextArea);
+		GridBagConstraints gbcLblNewLabel = new GridBagConstraints();
+		gbcLblNewLabel.gridwidth = 0;
+		gbcLblNewLabel.fill = GridBagConstraints.HORIZONTAL;
+		gbcLblNewLabel.weightx = 1.0;
+		gbcLblNewLabel.insets = new Insets(5, 5, 5, 5);
+		gbcLblNewLabel.gridx = 0;
+		gbcLblNewLabel.gridy = 1;
+		add(getLblNewLabel(), gbcLblNewLabel);
 	}
 
-	private JLabel getLblNewLabel_1() {
-		if (lblNewLabel_1 == null) {
-			lblNewLabel_1 = new JLabel(UIManager.getIcon("OptionPane.informationIcon")); //$NON-NLS-1$
+	private JLabel getLblNewLabel1() {
+		if (lblNewLabel1 == null) {
+			lblNewLabel1 = new JLabel(UIManager.getIcon("OptionPane.informationIcon")); //$NON-NLS-1$
 		}
-		return lblNewLabel_1;
+		return lblNewLabel1;
 	}
 	
 	private JLabel getLblNewLabel() {
