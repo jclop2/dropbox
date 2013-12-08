@@ -10,6 +10,7 @@ import java.util.Locale;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.dropbox.client2.DropboxAPI;
@@ -24,9 +25,10 @@ import com.fathzer.soft.ajlib.swing.Utils;
 import com.fathzer.soft.ajlib.swing.dialog.AbstractDialog;
 import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
 
-
 @SuppressWarnings("serial")
 public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAuthSession>, AccessTokenPair> {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionDialog.class);
+	
 	private boolean connectionHasStarted;
 	private WebAuthInfo info;
 	private AccessTokenPair pair;
@@ -63,6 +65,7 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 			updateOkButtonEnabled();
 			return;
 		} catch (DropboxException e) {
+			LOGGER.warn("Error while linking with Dropbox account", e);
 			AbstractURIChooserPanel.showError(this, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.unexpectedError", getLocale()), getLocale()); //$NON-NLS-1$
 		}
 		super.confirm();
@@ -70,9 +73,8 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 
 	@Override
 	protected String getOkDisabledCause() {
-		String btnName = MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.startButton", getLocale()); //$NON-NLS-1$
 		if (!this.connectionHasStarted) {
-			return MessageFormat.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()),btnName); //$NON-NLS-1$
+			return MessageFormat.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()), getConnectButton().getText()); //$NON-NLS-1$
 		}
 		return null;
 	}
@@ -92,14 +94,14 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 					try {
 						info = data.getSession().getAuthInfo();
 					} catch (Exception e) {
-						LoggerFactory.getLogger(getClass()).warn("Error while getting Authentication info", e);
+						LOGGER.warn("Error while getting Authentication info", e);
 						AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.connectionFailed", getLocale()), getLocale()); //$NON-NLS-1$
 						return;
 					}
 					Browser.show(new URI(info.url), window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", getLocale())); //$NON-NLS-1$
 					connectionHasStarted = true;
 				} catch (Exception e) {
-					LoggerFactory.getLogger(getClass()).warn("Error while unlinking Dropbox session", e);
+					LOGGER.warn("Error while unlinking Dropbox session", e);
 					AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.message", getLocale()), getLocale()); //$NON-NLS-1$
 				}
 				connectButton.setEnabled(false);

@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.DropboxInputStream;
 import com.dropbox.client2.exception.DropboxException;
@@ -35,32 +38,32 @@ import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
 import com.fathzer.soft.jclop.swing.MessagePack;
 
-
 public class DropboxService extends Service {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DropboxService.class);
 	private static final int WAIT_DELAY = 30;
 	private static final boolean SLOW_READING = Boolean.getBoolean("slowDataReading"); //$NON-NLS-1$
 	
 	public static final String URI_SCHEME = "dropbox";
 	
-	private DropboxAPI<? extends WebAuthSession> api;
+	private DropboxAPI<? extends WebAuthSession> currentApi;
 
 	public DropboxService(File root, DropboxAPI<? extends WebAuthSession> api) {
 		super(root, false);
-		this.api = api;
+		this.currentApi = api;
 	}
 
 	public DropboxAPI<? extends WebAuthSession> getDropboxAPI(Account account) {
-		WebAuthSession session = this.api.getSession();
+		WebAuthSession session = this.currentApi.getSession();
 		if (account==null) { 
 			// We need a new fresh unlinked session
 			session.unlink();
 		} else {
 			// We need a linked session
-			AccessTokenPair pair = this.api.getSession().getAccessTokenPair();
+			AccessTokenPair pair = this.currentApi.getSession().getAccessTokenPair();
 			if (pair!=null) {
 				if (pair.equals((AccessTokenPair) account.getConnectionData())) {
 					// Linked with the right account
-					return this.api;
+					return this.currentApi;
 				} else {
 					// Not linked with the right account
 					session.unlink();
@@ -68,7 +71,7 @@ public class DropboxService extends Service {
 			}
 			session.setAccessTokenPair((AccessTokenPair) account.getConnectionData());
 		}
-		return this.api;
+		return this.currentApi;
 	}
 
 	@Override
@@ -141,14 +144,14 @@ public class DropboxService extends Service {
 		Entry entry = getEntry(uri);
 		try {
 			String path = getRemotePath(entry);
-			api = getDropboxAPI(entry.getAccount());
+			currentApi = getDropboxAPI(entry.getAccount());
 			long totalSize = -1;
 			if (task != null) {
-				totalSize = api.metadata(path, 0, null, false, null).bytes;
+				totalSize = currentApi.metadata(path, 0, null, false, null).bytes;
 				task.setPhase(getMessage(MessagePack.DOWNLOADING, locale),
 						totalSize > 0 ? 100 : -1); //$NON-NLS-1$
 			}
-			DropboxInputStream dropboxStream = api.getFileStream(path, null);
+			DropboxInputStream dropboxStream = currentApi.getFileStream(path, null);
 			try {
 				// Transfer bytes from the file to the output file
 				byte[] buf = new byte[1024];
@@ -216,6 +219,7 @@ public class DropboxService extends Service {
 					try {
 						uploader.upload();
 					} catch (DropboxException e) {
+						LOGGER.warn("Error occurred while uploading. Retrying", e);
 						if (retryCounter > 5) {
 							throw e; // Give up after a while.
 						}
@@ -223,11 +227,13 @@ public class DropboxService extends Service {
 						try {
 							Thread.sleep(1000);
 						} catch (InterruptedException e1) {
+							LOGGER.warn("Uploading gets an InterruptedException", e1);
 						}
 					}
 				}
 			} catch (DropboxPartialFileException e) {
 				// Upload was cancelled
+				LOGGER.info("Uploading was cancelled", e);
 				return false;
 			} catch (DropboxException e) {
 				throw getException(e);
