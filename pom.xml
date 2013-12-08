@@ -24,4 +24,11 @@
   		<version>4.2.1</version>
   	</dependency>
   </dependencies>
+  <name>JClop-Dropbox</name>
+  <url>http://jclop.soft.fathzer.com</url>
+  <description>A library to manage Dropbox service in JClop.</description>
+  <scm>
+  	<url>http://svn.code.sf.net/p/jclop/code/trunk</url>
+  	<connection>http://svn.code.sf.net/p/jclop/code/trunk</connection>
+  </scm>
 </project>
