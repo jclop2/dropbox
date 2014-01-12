@@ -303,7 +303,6 @@ public class DropboxService extends Service {
 			if (metadata.isDeleted) {
 				return null;
 			} else {
-//TODO test with that				throw new DropboxServerException(new FakeServerError());
 				return metadata.rev;
 			}
 		} catch (DropboxServerException e) {
