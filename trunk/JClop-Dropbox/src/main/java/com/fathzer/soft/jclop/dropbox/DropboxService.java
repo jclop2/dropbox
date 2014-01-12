@@ -34,6 +34,7 @@ import com.fathzer.soft.jclop.Entry;
 import com.fathzer.soft.jclop.HostErrorException;
 import com.fathzer.soft.jclop.InvalidConnectionDataException;
 import com.fathzer.soft.jclop.JClopException;
+import com.fathzer.soft.jclop.NoSpaceRemainingException;
 import com.fathzer.soft.jclop.Service;
 import com.fathzer.soft.jclop.UnreachableHostException;
 import com.fathzer.soft.jclop.swing.MessagePack;
@@ -91,7 +92,8 @@ public class DropboxService extends Service {
 			if (task.isCancelled()) {
 				return null;
 			}
-			// Get the remote files list //FIXME The following line will hang if content has more than 2500 entries
+			// Get the remote files list
+			//FIXME The following line will hang if content has more than 2500 entries
 			List<com.dropbox.client2.DropboxAPI.Entry> contents = api.metadata("", 0, null, true, null).contents; //$NON-NLS-1$
 			Collection<Entry> result = new ArrayList<Entry>();
 			for (com.dropbox.client2.DropboxAPI.Entry entry : contents) {
@@ -108,19 +110,34 @@ public class DropboxService extends Service {
 		}
 	}
 
+	private JClopException getServerException(DropboxServerException e) {
+		if (e.error==DropboxServerException._500_INTERNAL_SERVER_ERROR
+				|| e.error==DropboxServerException._501_NOT_IMPLEMENTED
+				|| e.error==DropboxServerException._502_BAD_GATEWAY
+				|| e.error==DropboxServerException._503_SERVICE_UNAVAILABLE) {
+			return new HostErrorException(e);
+		} else if (e.error==DropboxServerException._507_INSUFFICIENT_STORAGE) {
+			return new NoSpaceRemainingException(e);
+		} else {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private JClopException getException(DropboxException e) throws InvalidConnectionDataException, UnreachableHostException {
 		if (e instanceof DropboxUnlinkedException) {
 			// The connection data correspond to no valid account
-			return new InvalidConnectionDataException();
+			return new InvalidConnectionDataException(e);
 		} else if (e instanceof DropboxParseException) {
 			// The server returned a request that the Dropbox API was not able to parse -> The server is crashed
-			return new HostErrorException();
+			return new HostErrorException(e);
 		} else if (e instanceof DropboxIOException) {
-			return new UnreachableHostException();
+			return new UnreachableHostException(e);
+		} else if (e instanceof DropboxServerException) {
+			return getServerException((DropboxServerException) e);
 		}
 		Throwable cause = e.getCause();
 		if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
-			return new UnreachableHostException();
+			return new UnreachableHostException(e);
 		} else {
 			throw new RuntimeException(e);
 		}
@@ -286,6 +303,7 @@ public class DropboxService extends Service {
 			if (metadata.isDeleted) {
 				return null;
 			} else {
+//TODO test with that				throw new DropboxServerException(new FakeServerError());
 				return metadata.rev;
 			}
 		} catch (DropboxServerException e) {
