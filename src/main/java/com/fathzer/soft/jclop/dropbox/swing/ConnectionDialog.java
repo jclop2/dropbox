@@ -4,7 +4,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URI;
-import java.text.MessageFormat;
 import java.util.Locale;
 
 import javax.swing.JButton;
@@ -20,6 +19,7 @@ import com.dropbox.client2.exception.DropboxUnlinkedException;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.WebAuthSession;
 import com.dropbox.client2.session.WebAuthSession.WebAuthInfo;
+import com.fathzer.jlocal.Formatter;
 import com.fathzer.soft.ajlib.swing.Browser;
 import com.fathzer.soft.ajlib.swing.Utils;
 import com.fathzer.soft.ajlib.swing.dialog.AbstractDialog;
@@ -74,7 +74,7 @@ public class ConnectionDialog extends AbstractDialog<DropboxAPI<? extends WebAut
 	@Override
 	protected String getOkDisabledCause() {
 		if (!this.connectionHasStarted) {
-			return MessageFormat.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()), getConnectButton().getText()); //$NON-NLS-1$
+			return Formatter.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()), getConnectButton().getText()); //$NON-NLS-1$
 		}
 		return null;
 	}
