@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>jclop-dropbox</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
   <parent>
   	<groupId>com.fathzer</groupId>
   	<artifactId>parent-pom</artifactId>
@@ -16,12 +16,17 @@
   	<dependency>
   		<groupId>com.fathzer</groupId>
   		<artifactId>jclop</artifactId>
-  		<version>0.0.2</version>
+  		<version>0.0.3</version>
   	</dependency>
   	<dependency>
   		<groupId>org.apache.httpcomponents</groupId>
   		<artifactId>httpclient</artifactId>
   		<version>4.2.1</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.fathzer</groupId>
+  		<artifactId>jlocal</artifactId>
+  		<version>1.0.0</version>
   	</dependency>
   </dependencies>
   <name>JClop-Dropbox</name>

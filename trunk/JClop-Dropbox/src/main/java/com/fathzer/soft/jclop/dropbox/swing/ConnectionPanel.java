@@ -7,10 +7,10 @@ import java.awt.GridBagLayout;
 
 import javax.swing.JLabel;
 
-import java.awt.GridBagConstraints;
-import java.text.MessageFormat;
-import java.util.Locale;
+import com.fathzer.jlocal.Formatter;
 
+import java.awt.GridBagConstraints;
+import java.util.Locale;
 import java.awt.Insets;
 
 @SuppressWarnings("serial")
@@ -66,7 +66,7 @@ class ConnectionPanel extends JPanel {
 	private JLabel getLblNewLabel() {
 		if (lblNewLabel == null) {
 			String message = MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.message.content", getLocale()); //$NON-NLS-1$
-			message = MessageFormat.format(message, getConnectButtonName(), okButtonName);
+			message = Formatter.format(message, getConnectButtonName(), okButtonName);
 			lblNewLabel = new JLabel();
 			lblNewLabel.setText(message);
 		}
