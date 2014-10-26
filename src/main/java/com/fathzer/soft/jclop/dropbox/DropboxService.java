@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.net.NoRouteToHostException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -327,6 +329,32 @@ public class DropboxService extends Service {
 		} catch (MissingResourceException e) {
 //System.out.println ("-> get default");
 			return MessagePack.DEFAULT.getString(key, locale);
+		}
+	}
+
+	@Override
+	public Entry getEntry(URI uri) {
+		if (!uri.getScheme().equals(getScheme())) {
+			throw new IllegalArgumentException();
+		}
+		try {
+			String path = URLDecoder.decode(uri.getPath().substring(1), UTF_8);
+			int index = path.indexOf('/');
+			String accountName = path.substring(0, index);
+			path = path.substring(index+1);
+			String[] split = StringUtils.split(uri.getUserInfo(), ':');
+			String accountId = URLDecoder.decode(split[0], UTF_8);
+			for (Account account : getAccounts()) {
+				if (account.getId().equals(accountId)) {
+					return new Entry(account, path);
+				}
+			}
+			// The account is unknown
+			Serializable connectionData = getConnectionData(split[1]);
+			Account account = new Account(this, accountId, accountName, connectionData);
+			return new Entry(account, path);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }
