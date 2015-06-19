@@ -1,0 +1,12 @@
+Le dialogue est pateux, il oblige à recommencer le process de validation quand le code est incorrect.
+
+Traiter les exceptions génantes qui sont passées via des RuntimeException.
+
+Vérifier que ça marche avec un proxy.
+
+Est-il vraiment intelligent (et utile) de mettre l'access token dans l'URL ?
+Vu qu'il est déjà dans le compte, ça peut sembler superflu.
+D'un autre côté, on peut le faire avec des URL à la ftp, donc, why not.
+
+Attendre le nouveau framework Dropbox ... vu que leur putain d'API change sans arrêt du tout au tout  !!!
+

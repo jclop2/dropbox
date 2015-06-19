@@ -23,13 +23,15 @@ class ConnectionPanel extends JPanel {
 	private JLabel textArea;
 
 	private String okButtonName;
+	private String appName;
 	
 	/**
 	 * Create the panel.
 	 */
-	ConnectionPanel(String okButtonName, Locale locale) {
+	ConnectionPanel(String okButtonName, String appName, Locale locale) {
 		setLocale(locale);
 		this.okButtonName = okButtonName;
+		this.appName = appName;
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		setLayout(gridBagLayout);
 		GridBagConstraints gbcLblNewLabel1 = new GridBagConstraints();
@@ -66,7 +68,7 @@ class ConnectionPanel extends JPanel {
 	private JLabel getLblNewLabel() {
 		if (lblNewLabel == null) {
 			String message = MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.message.content", getLocale()); //$NON-NLS-1$
-			message = Formatter.format(message, getConnectButtonName(), okButtonName);
+			message = Formatter.format(message, getConnectButtonName(), okButtonName, appName);
 			lblNewLabel = new JLabel();
 			lblNewLabel.setText(message);
 		}

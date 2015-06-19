@@ -5,7 +5,10 @@ import java.awt.Window;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import com.dropbox.client2.session.AccessTokenPair;
+import com.dropbox.core.DbxAccountInfo;
+import com.dropbox.core.DbxAuthFinish;
+import com.dropbox.core.DbxClient;
+import com.dropbox.core.DbxException;
 import com.fathzer.soft.ajlib.swing.Utils;
 import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.dropbox.DropboxService;
@@ -27,25 +30,31 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 	@Override
 	protected Account createNewAccount() {
 		Window owner = Utils.getOwnerWindow(this);
-		ConnectionDialog connectionDialog = new ConnectionDialog(owner, ((DropboxService)getService()).getDropboxAPI(null), getLocale());
+		ConnectionDialog connectionDialog = new ConnectionDialog(owner, ((DropboxService)getService()).getConnectionData(), getLocale());
 		connectionDialog.setVisible(true);
-		AccessTokenPair pair = connectionDialog.getResult();
-		if (pair==null) {
+		DbxAuthFinish finish = connectionDialog.getResult();
+		if (finish==null) {
 			return null;
 		}
-		com.dropbox.client2.DropboxAPI.Account accountInfo = connectionDialog.getAccountInfo();
-		String id = Long.toString(accountInfo.uid);
+		String id = finish.userId;
 		Account account = getService().getAccount(id);
 		if (account==null) {
 			// This is a new account
-			account = getService().newAccount(id, accountInfo.displayName, pair);
+			account = getService().newAccount(id, null, finish.accessToken);
 		} else {
 			// This is an existing account => update it
-			account.setDisplayName(accountInfo.displayName);
-			account.setConnectionData(pair);
+			account.setConnectionData(finish.accessToken);
 		}
-		account.setQuota(accountInfo.quota);
-		account.setUsed(accountInfo.quotaNormal+accountInfo.quotaShared);
+System.out.println ("token = "+finish.accessToken); //TODO
+		DbxClient dbxAPI = ((DropboxService)getService()).getDropboxAPI(account);
+		try {
+			DbxAccountInfo accountInfo = dbxAPI.getAccountInfo();
+			account.setDisplayName(accountInfo.displayName);
+			account.setQuota(accountInfo.quota.total);
+			account.setUsed(accountInfo.quota.normal+accountInfo.quota.shared);
+		} catch (DbxException e) {
+			throw new RuntimeException(e); //FIXME ... strange that new account is not throwing IOException
+		}
 		return account;
 	}
 

@@ -19,16 +19,20 @@ import java.util.MissingResourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dropbox.client2.DropboxAPI;
-import com.dropbox.client2.DropboxAPI.DropboxInputStream;
-import com.dropbox.client2.exception.DropboxException;
-import com.dropbox.client2.exception.DropboxIOException;
-import com.dropbox.client2.exception.DropboxParseException;
-import com.dropbox.client2.exception.DropboxPartialFileException;
-import com.dropbox.client2.exception.DropboxServerException;
-import com.dropbox.client2.exception.DropboxUnlinkedException;
 import com.dropbox.client2.session.AccessTokenPair;
-import com.dropbox.client2.session.WebAuthSession;
+import com.dropbox.core.DbxAccountInfo;
+import com.dropbox.core.DbxClient;
+import com.dropbox.core.DbxClient.Downloader;
+import com.dropbox.core.DbxClient.Uploader;
+import com.dropbox.core.DbxEntry;
+import com.dropbox.core.DbxException;
+import com.dropbox.core.DbxException.InvalidAccessToken;
+import com.dropbox.core.DbxException.NetworkIO;
+import com.dropbox.core.DbxException.ProtocolError;
+import com.dropbox.core.DbxException.ServerError;
+import com.dropbox.core.DbxOAuth1AccessToken;
+import com.dropbox.core.DbxOAuth1Upgrader;
+import com.dropbox.core.DbxWriteMode;
 import com.fathzer.soft.ajlib.utilities.StringUtils;
 import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.Cancellable;
@@ -42,37 +46,33 @@ import com.fathzer.soft.jclop.UnreachableHostException;
 import com.fathzer.soft.jclop.swing.MessagePack;
 
 public class DropboxService extends Service {
+	private static final String OAUTH2_PREFIX = "OAuth2-";
 	private static final Logger LOGGER = LoggerFactory.getLogger(DropboxService.class);
 	private static final int WAIT_DELAY = 30;
 	private static final boolean SLOW_READING = Boolean.getBoolean("slowDataReading"); //$NON-NLS-1$
 	
 	public static final String URI_SCHEME = "dropbox";
 	
-	private DropboxAPI<? extends WebAuthSession> currentApi;
+	private DbxConnectionData data;
+	private DbxClient currentApi;
+	private String currentId;
 
-	public DropboxService(File root, DropboxAPI<? extends WebAuthSession> api) {
+	public DropboxService(File root, DbxConnectionData data) {
 		super(root, false);
-		this.currentApi = api;
+		this.data = data;
+		this.currentId = null;
 	}
 
-	public DropboxAPI<? extends WebAuthSession> getDropboxAPI(Account account) {
-		WebAuthSession session = this.currentApi.getSession();
-		if (account==null) { 
-			// We need a new fresh unlinked session
-			session.unlink();
-		} else {
-			// We need a linked session
-			AccessTokenPair pair = this.currentApi.getSession().getAccessTokenPair();
-			if (pair!=null) {
-				if (pair.equals((AccessTokenPair) account.getConnectionData())) {
-					// Linked with the right account
-					return this.currentApi;
-				} else {
-					// Not linked with the right account
-					session.unlink();
-				}
+	public DbxClient getDropboxAPI(Account account) {
+		if (!account.getId().equals(currentId)) {
+			Serializable connectionData = account.getConnectionData();
+			if (connectionData instanceof AccessTokenPair) {
+				connectionData = upgradeToken(((AccessTokenPair)connectionData).key, ((AccessTokenPair)connectionData).secret);
+				account.setConnectionData(connectionData);
+				LOGGER.info("OAuth1 token upgraded");
 			}
-			session.setAccessTokenPair((AccessTokenPair) account.getConnectionData());
+			currentApi = new DbxClient(data.getConfig(), (String) connectionData);
+			currentId = account.getId();
 		}
 		return this.currentApi;
 	}
@@ -84,58 +84,47 @@ public class DropboxService extends Service {
 	
 	@Override
 	public Collection<Entry> getRemoteEntries(Account account, Cancellable task) throws JClopException {
-		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(account);
+		DbxClient api = getDropboxAPI(account);
 		try {
 			// Refresh the quota data
-			com.dropbox.client2.DropboxAPI.Account accountInfo = api.accountInfo();
-			account.setQuota(accountInfo.quota);
-			account.setUsed(accountInfo.quotaNormal+accountInfo.quotaShared);
+			DbxAccountInfo accountInfo = api.getAccountInfo();
+			account.setQuota(accountInfo.quota.total);
+			account.setUsed(accountInfo.quota.normal+accountInfo.quota.shared);
 			
 			if (task.isCancelled()) {
 				return null;
 			}
 			// Get the remote files list
 			//FIXME The following line will hang if content has more than 2500 entries
-			List<com.dropbox.client2.DropboxAPI.Entry> contents = api.metadata("", 0, null, true, null).contents; //$NON-NLS-1$
+			List<DbxEntry> contents = api.getMetadataWithChildren("/").children; //$NON-NLS-1$
 			Collection<Entry> result = new ArrayList<Entry>();
-			for (com.dropbox.client2.DropboxAPI.Entry entry : contents) {
-				if (!entry.isDeleted) {
-					Entry jclopEntry = getRemoteEntry(account, entry.fileName());
-					if (jclopEntry!=null) {
-						result.add(jclopEntry);
-					}
+			for (DbxEntry entry : contents) {
+				Entry jclopEntry = getRemoteEntry(account, entry.name);
+				if (jclopEntry!=null) {
+					result.add(jclopEntry);
 				}
 			}
 			return result;
-		} catch (DropboxException e) {
+		} catch (DbxException e) {
 			throw getException(e);
 		}
 	}
 
-	private JClopException getServerException(DropboxServerException e) {
-		if (e.error==DropboxServerException._500_INTERNAL_SERVER_ERROR
-				|| e.error==DropboxServerException._501_NOT_IMPLEMENTED
-				|| e.error==DropboxServerException._502_BAD_GATEWAY
-				|| e.error==DropboxServerException._503_SERVICE_UNAVAILABLE) {
-			return new HostErrorException(e);
-		} else if (e.error==DropboxServerException._507_INSUFFICIENT_STORAGE) {
-			return new NoSpaceRemainingException(e);
-		} else {
-			throw new RuntimeException(e);
-		}
+	private JClopException getServerException(ServerError e) {
+		return new HostErrorException(e);
 	}
 
-	private JClopException getException(DropboxException e) throws InvalidConnectionDataException, UnreachableHostException {
-		if (e instanceof DropboxUnlinkedException) {
+	private JClopException getException(DbxException e) throws InvalidConnectionDataException, UnreachableHostException {
+		if (e instanceof InvalidAccessToken) {
 			// The connection data correspond to no valid account
 			return new InvalidConnectionDataException(e);
-		} else if (e instanceof DropboxParseException) {
+		} else if (e instanceof ProtocolError) {
 			// The server returned a request that the Dropbox API was not able to parse -> The server is crashed
 			return new HostErrorException(e);
-		} else if (e instanceof DropboxIOException) {
+		} else if (e instanceof NetworkIO) {
 			return new UnreachableHostException(e);
-		} else if (e instanceof DropboxServerException) {
-			return getServerException((DropboxServerException) e);
+		} else if (e instanceof ServerError) {
+			return getServerException((ServerError) e);
 		}
 		Throwable cause = e.getCause();
 		if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
@@ -147,14 +136,27 @@ public class DropboxService extends Service {
 
 	@Override
 	public String getConnectionDataURIFragment(Serializable connectionData) {
-		AccessTokenPair tokens = (AccessTokenPair) connectionData;
-		return tokens.key + "-" + tokens.secret;
+		return OAUTH2_PREFIX + connectionData;
 	}
 
 	@Override
 	public Serializable getConnectionData(String uriFragment) {
-		String[] split = StringUtils.split(uriFragment, '-');
-		return new AccessTokenPair(split[0], split[1]);
+		if (uriFragment.startsWith(OAUTH2_PREFIX)) {
+			return uriFragment.substring(OAUTH2_PREFIX.length());
+		} else {
+			String[] split = StringUtils.split(uriFragment, '-');
+			return upgradeToken(split[0], split[1]);
+		}
+	}
+	
+	private String upgradeToken(String key, String secret) {
+		DbxOAuth1Upgrader upgrader = new DbxOAuth1Upgrader(getConnectionData().getConfig(), getConnectionData().getAppInfo());
+		try {
+			return upgrader.createOAuth2AccessToken(new DbxOAuth1AccessToken(key, secret));
+		} catch (DbxException e) {
+			//FIXME Should be more natural to throw an IOException
+			throw new RuntimeException(e);
+		}
 	}
 	
 	@Override
@@ -165,12 +167,12 @@ public class DropboxService extends Service {
 			String path = getRemotePath(entry);
 			currentApi = getDropboxAPI(entry.getAccount());
 			long totalSize = -1;
+			Downloader downloader = currentApi.startGetFile(path, null);
 			if (task != null) {
-				totalSize = currentApi.metadata(path, 0, null, false, null).bytes;
 				task.setPhase(getMessage(MessagePack.DOWNLOADING, locale),
-						totalSize > 0 ? 100 : -1); //$NON-NLS-1$
+						downloader.metadata.numBytes > 0 ? 100 : -1);
 			}
-			DropboxInputStream dropboxStream = currentApi.getFileStream(path, null);
+			InputStream dropboxStream = downloader.body;
 			try {
 				// Transfer bytes from the file to the output file
 				byte[] buf = new byte[1024];
@@ -199,7 +201,7 @@ public class DropboxService extends Service {
 			} finally {
 				dropboxStream.close();
 			}
-		} catch (DropboxException e) {
+		} catch (DbxException e) {
 			throw getException(e);
 		}
 	}
@@ -208,112 +210,80 @@ public class DropboxService extends Service {
 	public boolean upload(InputStream in, long length, URI uri,
 			Cancellable task, Locale locale) throws JClopException, IOException {
 		Entry entry = getEntry(uri);
-		try {
-			if (task != null) {
-				task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
-			}
-
-			// This implementation uses ChunkedUploader to allow the user to
-			// cancel the upload
-			// It has a major trap:
-			// It seems that each chunk requires a new connection to Dropbox. On
-			// some network configuration (with very slow proxy)
-			// this dramatically slows down the upload. We use a chunck size
-			// equals to the file size to prevent having such a problem.
-			// For that reason, the task will never been informed of the upload
-			// progress.
-			final DropboxAPI<? extends WebAuthSession>.ChunkedUploader uploader = getDropboxAPI(
-					entry.getAccount()).getChunkedUploader(in, length);
-			if (task != null) {
-				task.setCancelAction(new Runnable() {
-					@Override
-					public void run() {
-						uploader.abort();
-					}
-				});
-			}
-			try {
-				int retryCounter = 0;
-				while (!uploader.isComplete()) {
-					try {
-						uploader.upload();
-					} catch (DropboxException e) {
-						LOGGER.warn("Error occurred while uploading. Retrying", e);
-						if (retryCounter > 5) {
-							throw e; // Give up after a while.
-						}
-						retryCounter++;
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e1) {
-							LOGGER.warn("Uploading gets an InterruptedException", e1);
-						}
-					}
-				}
-			} catch (DropboxPartialFileException e) {
-				// Upload was cancelled
-				LOGGER.info("Uploading was cancelled", e);
-				return false;
-			} catch (DropboxException e) {
-				throw getException(e);
-			} finally {
-				if (task != null) {
-					task.setCancelAction(null);
-				}
-			}
-			String parentRev = task != null && task.isCancelled() ? null : getRemoteRevision(uri);
-			boolean result = task == null || !task.isCancelled();
-			if (result) {
-				uploader.finish(getRemotePath(entry), parentRev);
-			} else {
-				uploader.abort();
-			}
-			return result;
-
-			/*
-			 * // Here is an implementation that do not use chunckedUploader //
-			 * Its major problems are: // - It is not possible to cancel the
-			 * upload before it is completed // - When the upload is cancelled,
-			 * the Dropbox file is reverted to its previous version but it's
-			 * revision is incremented // This causes the synchronization
-			 * process to consider the file has been modified after the upload
-			 * if (task!=null)
-			 * task.setPhase(LocalizationData.get("dropbox.uploading"), -1);
-			 * //$NON-NLS-1$ // As this implementation doesn't allow to cancel
-			 * during the upload, we will remember what was the file state
-			 * String previous = getRemoteRevision(uri);
-			 * Dropbox.getAPI().putFileOverwrite(path, stream, length, null); if
-			 * (task!=null && task.isCancelled()) { // The upload was cancelled
-			 * if (previous==null) { // The file do not existed before, delete
-			 * it Dropbox.getAPI().delete(path); } else { // Revert to the
-			 * previous version // Unfortunately, this not really revert to the
-			 * previous state as it creates a new revision on Dropbox
-			 * Dropbox.getAPI().restore(path, previous); } return false; }
-			 * return true; /*
-			 */
-		} catch (DropboxException e) {
-			throw getException(e);
+		if (task != null) {
+			task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
 		}
+		
+		// This implementation uses ChunkedUploader to allow the user to
+		// cancel the upload
+		// It has a major trap:
+		// It seems that each chunk requires a new connection to Dropbox. On
+		// some network configuration (with very slow proxy)
+		// this dramatically slows down the upload. We use a chunck size
+		// equals to the file size to prevent having such a problem.
+		// For that reason, the task will never been informed of the upload
+		// progress.
+		//TODO Should be verified with API 1.7
+		int chunkSize = (int) Math.min(Integer.MAX_VALUE, length);
+		final Uploader uploader = getDropboxAPI(entry.getAccount()).startUploadFileChunked(getRemotePath(entry), DbxWriteMode.update(getRemoteRevision(uri)),
+                chunkSize);
+
+		if (task != null) {
+			task.setCancelAction(new Runnable() {
+				@Override
+				public void run() {
+					uploader.abort();
+				}
+			});
+		}
+		DbxEntry.File dbxFile = null;
+		try {
+			long byteSent = 0;
+			byte[] buffer = new byte[chunkSize];
+			OutputStream out = uploader.getBody();
+			while (byteSent<length) {
+				int remaining = (int) Math.min(length-byteSent, chunkSize);
+				int bytesRead = in.read(buffer,0,chunkSize);
+				if (bytesRead != remaining) {
+					uploader.abort();
+					throw new IOException("Premature end of input stream");
+				}
+				out.write(buffer, 0, bytesRead);
+				if (task!=null && task.isCancelled()) {
+					break;
+				}
+			}
+			if (task!=null && task.isCancelled()) {
+				uploader.abort();
+			} else {
+				out.flush();
+				dbxFile = uploader.finish();
+				//TODO test there is no conflict using the dfxFile's name.
+			}
+			// The close() is probably not usefull, but the Dropbox documentation is not very clear on that point.
+			uploader.close();
+		} catch (DbxException e) {
+			throw getException(e);
+		} finally {
+			if (task != null) {
+				task.setCancelAction(null);
+			}
+		}
+		return task == null || !task.isCancelled();
 	}
 	
 	@Override
 	public String getRemoteRevision(URI uri) throws JClopException {
 		Entry entry = getEntry(uri);
-		DropboxAPI<? extends WebAuthSession> api = getDropboxAPI(entry.getAccount());
+		DbxClient api = getDropboxAPI(entry.getAccount());
 		try {
-			com.dropbox.client2.DropboxAPI.Entry metadata = api.metadata(getRemotePath(entry), 1, null, true, null);
-			if (metadata.isDeleted) {
+			DbxEntry metadata = api.getMetadata(getRemotePath(entry));
+			if (metadata==null) {
 				return null;
 			} else {
-				return metadata.rev;
+				return metadata.asFile().rev;
 			}
-		} catch (DropboxServerException e) {
-			if (e.error==DropboxServerException._404_NOT_FOUND) {
-				return null;
-			} else {
-				throw getException(e);
-			}
-		} catch (DropboxException e) {
+		} catch (DbxException e) {
 			throw getException(e);
 		}
 	}
@@ -356,5 +326,9 @@ public class DropboxService extends Service {
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public DbxConnectionData getConnectionData() {
+		return this.data;
 	}
 }
