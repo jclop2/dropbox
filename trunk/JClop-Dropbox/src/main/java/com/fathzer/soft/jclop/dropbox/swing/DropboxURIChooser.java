@@ -5,15 +5,14 @@ import java.awt.Window;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import com.dropbox.core.DbxAccountInfo;
+import org.slf4j.LoggerFactory;
+
 import com.dropbox.core.DbxAuthFinish;
-import com.dropbox.core.DbxClient;
-import com.dropbox.core.DbxException;
 import com.fathzer.soft.ajlib.swing.Utils;
 import com.fathzer.soft.jclop.Account;
+import com.fathzer.soft.jclop.JClopException;
 import com.fathzer.soft.jclop.dropbox.DropboxService;
 import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
-
 
 @SuppressWarnings("serial")
 public class DropboxURIChooser extends AbstractURIChooserPanel {
@@ -41,19 +40,14 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 		if (account==null) {
 			// This is a new account
 			account = getService().newAccount(id, null, finish.accessToken);
+			try {
+				((DropboxService)getService()).setDisplayName(account);
+			} catch (JClopException e) {
+				LoggerFactory.getLogger(getClass()).warn("Unable to get account name from Dropbox", e);
+			}
 		} else {
 			// This is an existing account => update it
 			account.setConnectionData(finish.accessToken);
-		}
-System.out.println ("token = "+finish.accessToken); //TODO
-		DbxClient dbxAPI = ((DropboxService)getService()).getDropboxAPI(account);
-		try {
-			DbxAccountInfo accountInfo = dbxAPI.getAccountInfo();
-			account.setDisplayName(accountInfo.displayName);
-			account.setQuota(accountInfo.quota.total);
-			account.setUsed(accountInfo.quota.normal+accountInfo.quota.shared);
-		} catch (DbxException e) {
-			throw new RuntimeException(e); //FIXME ... strange that new account is not throwing IOException
 		}
 		return account;
 	}

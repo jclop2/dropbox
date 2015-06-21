@@ -57,13 +57,13 @@ public class DropboxService extends Service {
 	private DbxClient currentApi;
 	private String currentId;
 
-	public DropboxService(File root, DbxConnectionData data) {
+	public DropboxService(File root, DbxConnectionData data) throws IOException {
 		super(root, false);
 		this.data = data;
 		this.currentId = null;
 	}
 
-	public DbxClient getDropboxAPI(Account account) {
+	private DbxClient getDropboxAPI(Account account) throws TokenUpgradeException {
 		if (!account.getId().equals(currentId)) {
 			Serializable connectionData = account.getConnectionData();
 			if (connectionData instanceof AccessTokenPair) {
@@ -114,7 +114,7 @@ public class DropboxService extends Service {
 		return new HostErrorException(e);
 	}
 
-	private JClopException getException(DbxException e) throws InvalidConnectionDataException, UnreachableHostException {
+	private JClopException getException(DbxException e) throws JClopException {
 		if (e instanceof InvalidAccessToken) {
 			// The connection data correspond to no valid account
 			return new InvalidConnectionDataException(e);
@@ -130,7 +130,7 @@ public class DropboxService extends Service {
 		if ((cause instanceof UnknownHostException) || (cause instanceof NoRouteToHostException)) {
 			return new UnreachableHostException(e);
 		} else {
-			throw new RuntimeException(e);
+			throw new JClopException(e){};
 		}
 	}
 
@@ -145,17 +145,24 @@ public class DropboxService extends Service {
 			return uriFragment.substring(OAUTH2_PREFIX.length());
 		} else {
 			String[] split = StringUtils.split(uriFragment, '-');
-			return upgradeToken(split[0], split[1]);
+			return new AccessTokenPair(split[0], split[1]);
 		}
 	}
 	
-	private String upgradeToken(String key, String secret) {
+	private String upgradeToken(String key, String secret) throws TokenUpgradeException {
 		DbxOAuth1Upgrader upgrader = new DbxOAuth1Upgrader(getConnectionData().getConfig(), getConnectionData().getAppInfo());
 		try {
 			return upgrader.createOAuth2AccessToken(new DbxOAuth1AccessToken(key, secret));
 		} catch (DbxException e) {
-			//FIXME Should be more natural to throw an IOException
-			throw new RuntimeException(e);
+			throw new TokenUpgradeException(e);
+		}
+	}
+	
+	private static class TokenUpgradeException extends JClopException {
+		private static final long serialVersionUID = -6814530850231595921L;
+
+		public TokenUpgradeException(Throwable cause) {
+			super(cause);
 		}
 	}
 	
@@ -214,8 +221,7 @@ public class DropboxService extends Service {
 			task.setPhase(getMessage(MessagePack.UPLOADING, locale), -1); //$NON-NLS-1$
 		}
 		
-		// This implementation uses ChunkedUploader to allow the user to
-		// cancel the upload
+		// This implementation uses ChunkedUploader to allow the user to cancel the upload
 		// It has a major trap:
 		// It seems that each chunk requires a new connection to Dropbox. On
 		// some network configuration (with very slow proxy)
@@ -249,6 +255,7 @@ public class DropboxService extends Service {
 					throw new IOException("Premature end of input stream");
 				}
 				out.write(buffer, 0, bytesRead);
+				byteSent += bytesRead;
 				if (task!=null && task.isCancelled()) {
 					break;
 				}
@@ -314,14 +321,12 @@ public class DropboxService extends Service {
 			path = path.substring(index+1);
 			String[] split = StringUtils.split(uri.getUserInfo(), ':');
 			String accountId = URLDecoder.decode(split[0], UTF_8);
-			for (Account account : getAccounts()) {
-				if (account.getId().equals(accountId)) {
-					return new Entry(account, path);
-				}
+			Account account = getAccount(accountId);
+			if (account==null) {
+				// The account is unknown
+				Serializable connectionData = getConnectionData(split[1]);
+				account = newAccount(accountId, accountName, connectionData);
 			}
-			// The account is unknown
-			Serializable connectionData = getConnectionData(split[1]);
-			Account account = new Account(this, accountId, accountName, connectionData);
 			return new Entry(account, path);
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
@@ -330,5 +335,13 @@ public class DropboxService extends Service {
 
 	public DbxConnectionData getConnectionData() {
 		return this.data;
+	}
+
+	public void setDisplayName(Account account) throws JClopException {
+		try {
+			account.setDisplayName(getDropboxAPI(account).getAccountInfo().displayName);
+		} catch (DbxException e) {
+			throw getException(e);
+		}
 	}
 }

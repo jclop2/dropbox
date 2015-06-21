@@ -16,8 +16,8 @@
   	
   	<dependency>
   		<groupId>com.fathzer</groupId>
-  		<artifactId>jclop</artifactId>
-  		<version>0.0.4</version>
+  		<artifactId>jclop2</artifactId>
+  		<version>0.1.0</version>
   	</dependency>
   	<dependency>
   		<groupId>org.apache.httpcomponents</groupId>

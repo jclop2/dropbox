@@ -1,7 +1,5 @@
 Le dialogue est pateux, il oblige à recommencer le process de validation quand le code est incorrect.
 
-Traiter les exceptions génantes qui sont passées via des RuntimeException.
-
 Vérifier que ça marche avec un proxy.
 
 Est-il vraiment intelligent (et utile) de mettre l'access token dans l'URL ?
