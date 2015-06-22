@@ -26,6 +26,7 @@ import com.dropbox.core.DbxClient.Downloader;
 import com.dropbox.core.DbxClient.Uploader;
 import com.dropbox.core.DbxEntry;
 import com.dropbox.core.DbxException;
+import com.dropbox.core.DbxException.BadResponseCode;
 import com.dropbox.core.DbxException.InvalidAccessToken;
 import com.dropbox.core.DbxException.NetworkIO;
 import com.dropbox.core.DbxException.ProtocolError;
@@ -115,7 +116,9 @@ public class DropboxService extends Service {
 	}
 
 	private JClopException getException(DbxException e) throws JClopException {
-		if (e instanceof InvalidAccessToken) {
+		if ((e instanceof BadResponseCode) && (((BadResponseCode)e).statusCode==507)) {
+			return new NoSpaceRemainingException(e);
+		} else if (e instanceof InvalidAccessToken) {
 			// The connection data correspond to no valid account
 			return new InvalidConnectionDataException(e);
 		} else if (e instanceof ProtocolError) {
