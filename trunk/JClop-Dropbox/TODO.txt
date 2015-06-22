@@ -2,9 +2,12 @@ Le dialogue est pateux, il oblige à recommencer le process de validation quand l
 
 Vérifier que ça marche avec un proxy.
 
-Est-il vraiment intelligent (et utile) de mettre l'access token dans l'URL ?
+Attendre le nouveau framework Dropbox ... vu que leur putain d'API change sans arrêt du tout au tout  !!!
+
+Pour y réfléchir :
+------------------
+- Quand des fichiers en cache sont détruits dans Dropbox, on les voit quand même. Bizarre, d'un autre côté,on peut voir ça comme un problème de synchronisation.
+- Est-il vraiment intelligent (et utile) de mettre l'access token dans l'URL ?
 Vu qu'il est déjà dans le compte, ça peut sembler superflu.
 D'un autre côté, on peut le faire avec des URL à la ftp, donc, why not.
-
-Attendre le nouveau framework Dropbox ... vu que leur putain d'API change sans arrêt du tout au tout  !!!
 
