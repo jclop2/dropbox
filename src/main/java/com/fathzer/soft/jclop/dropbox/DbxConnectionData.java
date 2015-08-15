@@ -6,8 +6,10 @@ import com.dropbox.core.DbxRequestConfig;
 public class DbxConnectionData {
 	private DbxRequestConfig config;
 	private DbxAppInfo appInfo;
+	private String appName;
 
-	public DbxConnectionData(DbxRequestConfig config, DbxAppInfo appInfo) {
+	public DbxConnectionData(String appName, DbxRequestConfig config, DbxAppInfo appInfo) {
+		this.appName = appName;
 		this.config = config;
 		this.appInfo = appInfo;
 	}
@@ -21,7 +23,6 @@ public class DbxConnectionData {
 	}
 
 	public String getAppName() {
-		// TODO Auto-generated method stub
-		return "TODO";
+		return appName;
 	}
 }
