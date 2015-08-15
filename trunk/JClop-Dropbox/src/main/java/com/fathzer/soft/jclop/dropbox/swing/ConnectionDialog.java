@@ -7,8 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Locale;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.slf4j.Logger;
@@ -21,7 +19,6 @@ import com.fathzer.jlocal.Formatter;
 import com.fathzer.soft.ajlib.swing.Browser;
 import com.fathzer.soft.ajlib.swing.Utils;
 import com.fathzer.soft.ajlib.swing.dialog.AbstractDialog;
-import com.fathzer.soft.ajlib.swing.widget.TextWidget;
 import com.fathzer.soft.jclop.dropbox.DbxConnectionData;
 import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
 
@@ -31,12 +28,8 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 	
 	private boolean connectionHasStarted;
 	private DbxAuthFinish pair;
-	private JButton connectButton;
 	private DbxWebAuthNoRedirect webAuth;
-
-	private JLabel codeLabel;
-
-	private TextWidget codeField;
+	private ConnectionButtonsPanel cButtons;
 
 	public ConnectionDialog(Window owner, DbxConnectionData appInfo, Locale locale) {
 		super(owner, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.title", locale), appInfo); //$NON-NLS-1$
@@ -57,13 +50,13 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 	@Override
 	protected void confirm() {
 		try {
-			String code = getCodeField().getText();
+			String code = getConnectionButtonsPanel().getCodeField().getText();
 			pair = webAuth.finish(code);
 		} catch (DbxException.BadRequest e) {
 			// The user didn't grant the access to Dropbox
 			AbstractURIChooserPanel.showError(this, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.accessNotGranted", getLocale()), getLocale()); //$NON-NLS-1$
 			connectionHasStarted = false;
-			getConnectButton().setEnabled(true);
+			getConnectionButtonsPanel().getConnectButton().setEnabled(true);
 			updateOkButtonEnabled();
 			return;
 		} catch (DbxException e) {
@@ -76,23 +69,18 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 	@Override
 	protected String getOkDisabledCause() {
 		if (!this.connectionHasStarted) {
-			return Formatter.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()), getConnectButton().getText()); //$NON-NLS-1$
+			return Formatter.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.processNotStarted", getLocale()), getConnectionButtonsPanel().getConnectButton().getText()); //$NON-NLS-1$
 		}
 		return null;
 	}
 
 	@Override
 	protected JPanel createButtonsPane() {
-		JPanel panel = new JPanel();
-		panel.add(getConnectButton());
-		panel.add(getCodeLabel());
-		panel.add(getCodeField());
-		panel.add(getOkButton());
-		panel.add(getCancelButton());
-		connectButton.addActionListener(new ActionListener() {
+		getConnectionButtonsPanel().addButtons(getOkButton(), getCancelButton());
+		cButtons.getConnectButton().addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
-				Window window = Utils.getOwnerWindow(connectButton);
+				Window window = Utils.getOwnerWindow(cButtons);
 			    webAuth = new DbxWebAuthNoRedirect(data.getConfig(), data.getAppInfo());
 			    try {
 			    	String authorizeUrl = webAuth.start();
@@ -118,37 +106,18 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 					AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.message", getLocale()), getLocale()); //$NON-NLS-1$
 				}
 */
-				connectButton.setEnabled(false);
+			    cButtons.getConnectButton().setEnabled(false);
 				updateOkButtonEnabled();
 			}
 		});
-		return panel;
+		return cButtons;
 	}
 	
-	private TextWidget getCodeField() {
-		if (codeField==null) {
-			codeField = new TextWidget(15);
+	private ConnectionButtonsPanel getConnectionButtonsPanel() {
+		if (cButtons==null) {
+			cButtons = new ConnectionButtonsPanel(getLocale());
 		}
-		return codeField;
+		return cButtons;
 	}
-
-	private JLabel getCodeLabel() {
-		if (codeLabel==null) {
-			codeLabel = new JLabel(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.code.title", getLocale()));
-		}
-		return codeLabel;
-	}
-
-	private JButton getConnectButton() {
-		if (connectButton==null) {
-			connectButton = new JButton(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.startButton", getLocale())); //$NON-NLS-1$
-			connectButton.setToolTipText(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.startButton.tooltip", getLocale())); //$NON-NLS-1$
-		}
-		return connectButton;
-	}
-/*	
-	public Account getAccountInfo() {
-		return this.accountInfo;
-	}
-*/
+	
 }

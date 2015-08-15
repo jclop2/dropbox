@@ -81,7 +81,7 @@ class ConnectionPanel extends JPanel {
 	
 	private JLabel getTextArea() {
 		if (textArea == null) {
-			textArea = new JLabel(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.message.header", getLocale()));  //$NON-NLS-1$
+			textArea = new JLabel(Formatter.format(MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.message.header", getLocale()),appName));  //$NON-NLS-1$
 		}
 		return textArea;
 	}

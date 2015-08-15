@@ -1,4 +1,5 @@
 Le dialogue est pateux, il oblige à recommencer le process de validation quand le code est incorrect.
+Quand on vire tous les comptes, on n'arrive pas au dialogue de connexion sur un compte, mais sur une fenêtre toute vide et triste ;-)
 
 Vérifier que ça marche avec un proxy.
 
