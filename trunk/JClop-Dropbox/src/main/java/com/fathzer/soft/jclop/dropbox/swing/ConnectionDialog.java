@@ -12,9 +12,10 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.dropbox.core.BadRequestException;
 import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxException;
-import com.dropbox.core.DbxWebAuthNoRedirect;
+import com.dropbox.core.DbxWebAuth;
 import com.fathzer.jlocal.Formatter;
 import com.fathzer.soft.ajlib.swing.Browser;
 import com.fathzer.soft.ajlib.swing.Utils;
@@ -28,7 +29,7 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 	
 	private boolean connectionHasStarted;
 	private DbxAuthFinish pair;
-	private DbxWebAuthNoRedirect webAuth;
+	private DbxWebAuth webAuth;
 	private ConnectionButtonsPanel cButtons;
 
 	public ConnectionDialog(Window owner, DbxConnectionData appInfo, Locale locale) {
@@ -51,11 +52,10 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 	protected void confirm() {
 		try {
 			String code = getConnectionButtonsPanel().getCodeField().getText();
-			pair = webAuth.finish(code);
-		} catch (DbxException.BadRequest e) {
+			pair = webAuth.finishFromCode(code);
+		} catch (BadRequestException e) {
 			// The user didn't grant the access to Dropbox
 			AbstractURIChooserPanel.showError(this, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.accessNotGranted", getLocale()), getLocale()); //$NON-NLS-1$
-			connectionHasStarted = false;
 			getConnectionButtonsPanel().getConnectButton().setEnabled(true);
 			updateOkButtonEnabled();
 			return;
@@ -81,9 +81,11 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				Window window = Utils.getOwnerWindow(cButtons);
-			    webAuth = new DbxWebAuthNoRedirect(data.getConfig(), data.getAppInfo());
+			    webAuth = new DbxWebAuth(data.getConfig(), data.getAppInfo());
 			    try {
-			    	String authorizeUrl = webAuth.start();
+				    DbxWebAuth.Request authRequest = DbxWebAuth.newRequestBuilder()
+				             .build();
+			        String authorizeUrl = webAuth.authorize(authRequest);
 			    	Browser.show(new URI(authorizeUrl), window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", getLocale())); //$NON-NLS-1$
 			    	connectionHasStarted = true;
 			    } catch (URISyntaxException e) {
