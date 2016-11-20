@@ -35,11 +35,11 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 		if (finish==null) {
 			return null;
 		}
-		String id = finish.userId;
+		String id = finish.getUserId();
 		Account account = getService().getAccount(id);
 		if (account==null) {
 			// This is a new account
-			account = getService().newAccount(id, null, finish.accessToken);
+			account = getService().newAccount(id, null, finish.getAccessToken());
 			try {
 				((DropboxService)getService()).setDisplayName(account);
 			} catch (JClopException e) {
@@ -47,7 +47,7 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 			}
 		} else {
 			// This is an existing account => update it
-			account.setConnectionData(finish.accessToken);
+			account.setConnectionData(finish.getAccessToken());
 		}
 		return account;
 	}
