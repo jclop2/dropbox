@@ -32,6 +32,7 @@ import com.dropbox.core.ServerException;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.ListFolderResult;
+import com.dropbox.core.v2.files.ListRevisionsBuilder;
 import com.dropbox.core.v2.files.Metadata;
 import com.dropbox.core.v2.files.UploadBuilder;
 import com.dropbox.core.v2.files.UploadUploader;
@@ -254,7 +255,8 @@ public class DropboxService extends Service {
 		//TODO Should be verified with API 2.0
 		int chunkSize = (int) Math.min(Integer.MAX_VALUE, length);
 		UploadBuilder uploaderBuilder = getDropboxAPI(entry.getAccount()).files().uploadBuilder(getRemotePath(entry));
-		uploaderBuilder.withMode(WriteMode.update(getRemoteRevision(uri)));
+		final String rev = getRemoteRevision(uri);
+		uploaderBuilder.withMode(rev==null ? WriteMode.ADD : WriteMode.update(rev));
 		try {
 			final UploadUploader uploader = uploaderBuilder.start();
 			try {
@@ -306,7 +308,9 @@ public class DropboxService extends Service {
 		Entry entry = getEntry(uri);
 		DbxClientV2 api = getDropboxAPI(entry.getAccount());
 		try {
-			List<FileMetadata> revisions = api.files().listRevisions(getRemotePath(entry),1).getEntries();
+			ListRevisionsBuilder builder = api.files().listRevisionsBuilder(getRemotePath(entry));
+			builder.withLimit(1L);
+			List<FileMetadata> revisions = builder.start().getEntries();
 			if (revisions.isEmpty()) {
 				return null;
 			} else {
