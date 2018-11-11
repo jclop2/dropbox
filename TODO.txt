@@ -1,4 +1,3 @@
-Vérifier que ça marche avec un proxy.
 
 ======================================================================
 Pour y réfléchir :
