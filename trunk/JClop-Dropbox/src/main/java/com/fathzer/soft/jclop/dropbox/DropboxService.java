@@ -31,6 +31,7 @@ import com.dropbox.core.ProtocolException;
 import com.dropbox.core.ServerException;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
+import com.dropbox.core.v2.files.GetMetadataErrorException;
 import com.dropbox.core.v2.files.ListFolderResult;
 import com.dropbox.core.v2.files.ListRevisionsBuilder;
 import com.dropbox.core.v2.files.Metadata;
@@ -308,18 +309,32 @@ public class DropboxService extends Service {
 		Entry entry = getEntry(uri);
 		DbxClientV2 api = getDropboxAPI(entry.getAccount());
 		try {
-			ListRevisionsBuilder builder = api.files().listRevisionsBuilder(getRemotePath(entry));
-			builder.withLimit(1L);
-			List<FileMetadata> revisions = builder.start().getEntries();
-			if (revisions.isEmpty()) {
-				return null;
-			} else {
+			String remotePath = getRemotePath(entry);
+			if (remoteExists(api, remotePath)) {
+				ListRevisionsBuilder builder = api.files().listRevisionsBuilder(remotePath);
+				builder.withLimit(1L);
+				List<FileMetadata> revisions = builder.start().getEntries();
 				return revisions.get(0).getRev();
+			} else {
+				return null;
 			}
 		} catch (DbxException e) {
 			throw getException(e);
 		}
 	}
+	
+	private boolean remoteExists(DbxClientV2 api, String remotePath) throws DbxException {
+        try{
+            api.files().getMetadata(remotePath);
+            return true;
+        }catch (GetMetadataErrorException e){
+            if (e.errorValue.isPath() && e.errorValue.getPathValue().isNotFound()) {
+                return false;
+            } else {
+                throw e;
+            }
+        }
+    }
 	
 	public String getMessage(String key, Locale locale) {
 		try {
