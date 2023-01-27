@@ -1,40 +1,46 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <artifactId>jclop-dropbox2</artifactId>
-  <version>0.1.4</version>
-  <parent>
-  	<groupId>com.fathzer</groupId>
-  	<artifactId>parent-pom</artifactId>
-  	<version>1.0.4</version>
-  </parent>
-  <dependencies>
-  	<dependency>
-  		<groupId>com.dropbox.core</groupId>
-  		<artifactId>dropbox-core-sdk</artifactId>
-  		<version>3.1.3</version>
-  	</dependency>
-  	
-  	<dependency>
-  		<groupId>com.fathzer</groupId>
-  		<artifactId>jclop2</artifactId>
-  		<version>0.1.0</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.apache.httpcomponents</groupId>
-  		<artifactId>httpclient</artifactId>
-  		<version>4.5.11</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.fathzer</groupId>
-  		<artifactId>jlocal</artifactId>
-  		<version>1.0.0</version>
-  	</dependency>
-  </dependencies>
-  <name>JClop-Dropbox</name>
-  <url>http://jclop.soft.fathzer.com</url>
-  <description>A library to manage Dropbox service in JClop.</description>
-  <scm>
-  	<url>http://svn.code.sf.net/p/jclop/code/trunk</url>
-  	<connection>http://svn.code.sf.net/p/jclop/code/trunk</connection>
-  </scm>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>jclop-dropbox2</artifactId>
+	<version>0.1.4</version>
+	<parent>
+		<groupId>com.fathzer</groupId>
+		<artifactId>parent-pom</artifactId>
+		<version>1.0.4</version>
+	</parent>
+	<name>JClop-Dropbox</name>
+	<url>http://jclop.soft.fathzer.com</url>
+	<description>A library to manage Dropbox service in JClop.</description>
+	<scm>
+		<url>https://github.com/jclop2/dropbox.git</url>
+		<connection>https://github.com/jclop2/dropbox.git</connection>
+	</scm>
+	
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<sonar.organization>jclop</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+	</properties>
+	
+	<dependencies>
+		<dependency>
+			<groupId>com.dropbox.core</groupId>
+			<artifactId>dropbox-core-sdk</artifactId>
+			<version>3.1.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fathzer</groupId>
+			<artifactId>jclop2</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.11</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fathzer</groupId>
+			<artifactId>jlocal</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+	</dependencies>
 </project>
