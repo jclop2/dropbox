@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.net.NoRouteToHostException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -393,10 +393,18 @@ public class DropboxService extends Service {
 	}
 	
 	static String urlEncode(String str) {
-		return URLEncoder.encode(str, StandardCharsets.UTF_8);
+		try {
+			return URLEncoder.encode(str, UTF_8);
+		} catch (UnsupportedEncodingException e) {
+			throw new ShouldNotHappenException(e);
+		}
 	}
 	private static String urlDecode(String str) {
-		return URLDecoder.decode(str, StandardCharsets.UTF_8);
+		try {
+			return URLDecoder.decode(str, UTF_8);
+		} catch (UnsupportedEncodingException e) {
+			throw new ShouldNotHappenException(e);
+		}
 	}
 
 	/** Finish the authentication or re-authentication of an account.
