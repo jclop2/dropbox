@@ -4,7 +4,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Locale;
 
 import javax.swing.JPanel;
@@ -16,6 +15,7 @@ import com.dropbox.core.BadRequestException;
 import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxWebAuth;
+import com.dropbox.core.TokenAccessType;
 import com.fathzer.jlocal.Formatter;
 import com.fathzer.soft.ajlib.swing.Browser;
 import com.fathzer.soft.ajlib.swing.Utils;
@@ -82,32 +82,13 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 			public void actionPerformed(ActionEvent event) {
 				Window window = Utils.getOwnerWindow(cButtons);
 			    webAuth = new DbxWebAuth(data.getConfig(), data.getAppInfo());
-			    try {
-				    DbxWebAuth.Request authRequest = DbxWebAuth.newRequestBuilder()
-				             .build();
-			        String authorizeUrl = webAuth.authorize(authRequest);
-			    	Browser.show(new URI(authorizeUrl), window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", getLocale())); //$NON-NLS-1$
-			    	connectionHasStarted = true;
-			    } catch (URISyntaxException e) {
-					throw new RuntimeException(e);
-				}
-/*				
-				try {
-					data.getSession().unlink();
-					try {
-						info = data.getSession().getAuthInfo();
-					} catch (Exception e) {
-						LOGGER.warn("Error while getting Authentication info", e);
-						AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.connectionFailed", getLocale()), getLocale()); //$NON-NLS-1$
-						return;
-					}
-					Browser.show(new URI(info.url), window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", getLocale())); //$NON-NLS-1$
-					connectionHasStarted = true;
-				} catch (Exception e) {
-					LOGGER.warn("Error while unlinking Dropbox session", e);
-					AbstractURIChooserPanel.showError(window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.message", getLocale()), getLocale()); //$NON-NLS-1$
-				}
-*/
+			    DbxWebAuth.Request authRequest = DbxWebAuth.newRequestBuilder()
+			    		.withNoRedirect()
+			    		.withTokenAccessType(TokenAccessType.OFFLINE)
+			            .build();
+		        String authorizeUrl = webAuth.authorize(authRequest);
+		    	Browser.show(URI.create(authorizeUrl), window, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", getLocale())); //$NON-NLS-1$
+		    	connectionHasStarted = true;
 			    cButtons.getConnectButton().setEnabled(false);
 				updateOkButtonEnabled();
 			}

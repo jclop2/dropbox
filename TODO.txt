@@ -1,17 +1,17 @@
 
 ======================================================================
-Pour y réfléchir :
+Pour y rÃ©flÃ©chir :
 ------------------
 
-- Quand des fichiers en cache sont absents dans Dropbox, on peut les voir quand même.
-Ca peut sembler bizarre, pourtant, c'est normal dans le cas où il n'y a plus de place dans Dropbox.
-Dans ce cas, ceci n'est que le résultat du fait qu'on ne peut plus synchroniser cache local et Dropbox. La copie locale reste en attendant de pouvoir synchroniser de nouveau.
+- Quand des fichiers en cache sont absents dans Dropbox, on peut les voir quand mÃªme.
+Ca peut sembler bizarre, pourtant, c'est normal dans le cas oÃ¹ il n'y a plus de place dans Dropbox.
+Dans ce cas, ceci n'est que le rÃ©sultat du fait qu'on ne peut plus synchroniser cache local et Dropbox. La copie locale reste en attendant de pouvoir synchroniser de nouveau.
 
 - Est-il vraiment intelligent (et utile) de mettre l'access token dans l'URL ?
-Vu qu'il est déjà dans le compte, ça peut sembler superflu.
-D'un autre côté, on peut le faire avec des URL à la ftp, donc, why not.
+Vu qu'il est dÃ©jÃ  dans le compte, Ã§a peut sembler superflu.
+D'un autre cÃ´tÃ©, on peut le faire avec des URL Ã  la ftp, donc, why not.
 
-- Quand on vire tous les comptes, qu'on ferme le dialogue, puis qu'on le rouvre, on n'arrive pas au dialogue de connexion sur un compte, mais sur une fenêtre toute vide et triste ;-)
-D'un autre côté, le pb vient de JClop qui n'informe pas les URIChooser quand ils passent au premier plan en dehors d'un clic sur un onglet.
+- Quand on supprime tous les comptes, qu'on ferme le dialogue, puis qu'on le rouvre, on n'arrive pas au dialogue de connexion sur un compte, mais sur une fenÃªtre toute vide et triste ;-)
+Le pb vient de JClop qui n'informe pas les URIChooser quand ils passent au premier plan en dehors d'un clic sur un onglet.
 
 

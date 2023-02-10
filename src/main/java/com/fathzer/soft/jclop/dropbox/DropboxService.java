@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.NoRouteToHostException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,19 +17,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.core.BadResponseCodeException;
+import com.dropbox.core.DbxAppInfo;
+import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
-import com.dropbox.core.DbxOAuth1AccessToken;
-import com.dropbox.core.DbxOAuth1Upgrader;
 import com.dropbox.core.InvalidAccessTokenException;
 import com.dropbox.core.NetworkIOException;
 import com.dropbox.core.ProtocolException;
 import com.dropbox.core.ServerException;
+import com.dropbox.core.oauth.DbxCredential;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.GetMetadataErrorException;
@@ -54,7 +54,7 @@ import com.fathzer.soft.jclop.swing.MessagePack;
 
 public class DropboxService extends Service {
 	private static final String OAUTH2_PREFIX = "OAuth2-";
-	private static final Logger LOGGER = LoggerFactory.getLogger(DropboxService.class);
+	private static final String OAUTH2_EXPIRING_PREFIX = "OAuth2-refresh-";
 	private static final int WAIT_DELAY = 30;
 	private static final boolean SLOW_READING = Boolean.getBoolean("slowDataReading"); //$NON-NLS-1$
 	
@@ -70,20 +70,39 @@ public class DropboxService extends Service {
 		this.currentId = null;
 	}
 
-	private DbxClientV2 getDropboxAPI(Account account) throws TokenUpgradeException {
+	private DbxClientV2 getDropboxAPI(final Account account) {
 		if (!account.getId().equals(currentId)) {
-			Serializable connectionData = account.getConnectionData();
-			if (connectionData instanceof AccessTokenPair) {
-				connectionData = upgradeToken(((AccessTokenPair)connectionData).key, ((AccessTokenPair)connectionData).secret);
-				account.setConnectionData(connectionData);
-				LOGGER.info("OAuth1 token upgraded");
-			}
-			currentApi = new DbxClientV2(data.getConfig(), (String) connectionData);
+			currentApi = new DbxClientV2(data.getConfig(), getCredentials(account));
 			currentId = account.getId();
 		}
 		return this.currentApi;
 	}
+	
+	DbxCredential getCredentials(Account account) {
+		Serializable connectionData = account.getConnectionData();
+		if (connectionData instanceof String) {
+			account.setConnectionData(Credentials.fromLongLived((String)connectionData));
+		} else if (!(connectionData instanceof Credentials)) {
+			throw new IllegalArgumentException();
+		}
+		final Credentials cred = (Credentials) account.getConnectionData();
+		final String access = cred.getAccessToken()!=null ? cred.getAccessToken() : "fakeOne"; 
+		return getDbxCredential(account, access, cred.getExpiresAt(), cred.getRefreshToken(), data.getAppInfo());
+	}
 
+	/** Gets the Dropbox credentials to be used with the account.
+	 * This method is there just to allow test to override the returned class in order to mock the token refresh process.
+	 * @param account The account to update when token is refreshed
+	 * @param access The current access token
+	 * @param expiresAt the expiration date of the access token 
+	 * @param refresh The refresh token
+	 * @param appInfo The Dropbox application information
+	 * @return A DbxCredentials instance
+	 */
+	protected DbxCredential getDbxCredential(Account account, String access, long expiresAt, String refresh, DbxAppInfo appInfo) {
+		return new ObservableDbxCredential(account, access, expiresAt, refresh, appInfo.getKey(), appInfo.getSecret());
+	}
+	
 	@Override
 	public String getScheme() {
 		return URI_SCHEME;
@@ -160,63 +179,46 @@ public class DropboxService extends Service {
 
 	@Override
 	public String getConnectionDataURIFragment(Serializable connectionData) {
-		return OAUTH2_PREFIX + connectionData;
+		if (connectionData instanceof Credentials) {
+			final Credentials cred = (Credentials)connectionData;
+			// Long-lived token, that is no more emitted by Dropbox is not url encoded to keep compatibility with previous API releases.
+			return cred.getRefreshToken()==null ? OAUTH2_PREFIX + cred.getAccessToken() : urlEncode(OAUTH2_EXPIRING_PREFIX + cred.getRefreshToken());
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	@Override
 	public Serializable getConnectionData(String uriFragment) {
-		if (uriFragment.startsWith(OAUTH2_PREFIX)) {
-			return uriFragment.substring(OAUTH2_PREFIX.length());
+		if (uriFragment.startsWith(OAUTH2_EXPIRING_PREFIX)) {
+			return Credentials.fromRefresh(urlDecode(uriFragment.substring(OAUTH2_EXPIRING_PREFIX.length())));
+		} else if (uriFragment.startsWith(OAUTH2_PREFIX)) {
+			// Long-lived token from previous dropbox api
+			return Credentials.fromLongLived(uriFragment.substring(OAUTH2_PREFIX.length()));
 		} else {
-			String[] split = StringUtils.split(uriFragment, '-');
-			return new AccessTokenPair(split[0], split[1]);
-		}
-	}
-	
-	private String upgradeToken(String key, String secret) throws TokenUpgradeException {
-		DbxOAuth1Upgrader upgrader = new DbxOAuth1Upgrader(getConnectionData().getConfig(), getConnectionData().getAppInfo());
-		try {
-			return upgrader.createOAuth2AccessToken(new DbxOAuth1AccessToken(key, secret));
-		} catch (DbxException e) {
-			throw new TokenUpgradeException(e);
-		}
-	}
-	
-	private static class TokenUpgradeException extends JClopException {
-		private static final long serialVersionUID = -6814530850231595921L;
-
-		public TokenUpgradeException(Throwable cause) {
-			super(cause);
+			throw new IllegalArgumentException();
 		}
 	}
 	
 	@Override
-	public boolean download(URI uri, OutputStream out, Cancellable task,
-			Locale locale) throws JClopException, IOException {
+	public boolean download(URI uri, OutputStream out, Cancellable task, Locale locale) throws IOException {
 		Entry entry = getEntry(uri);
 		try {
-			String path = getRemotePath(entry);
 			DbxClientV2 api = getDropboxAPI(entry.getAccount());
-			long totalSize = -1;
-			DbxDownloader<FileMetadata> downloader = api.files().download(path);
+			DbxDownloader<FileMetadata> downloader = api.files().download(getRemotePath(entry));
 			if (task != null) {
 				task.setPhase(getMessage(MessagePack.DOWNLOADING, locale),
 						downloader.getResult().getSize() > 0 ? 100 : -1);
 			}
-			InputStream dropboxStream = downloader.getInputStream();
+			final InputStream dropboxStream = downloader.getInputStream();
 			try {
+				long totalSize = -1;
 				// Transfer bytes from the file to the output file
-				byte[] buf = new byte[1024];
+				final byte[] buf = new byte[1024];
 				long red = 0;
 				for (int len = dropboxStream.read(buf);  len > 0; len = dropboxStream.read(buf)) {
 					out.write(buf, 0, len);
-					if (SLOW_READING) {
-						try {
-							Thread.sleep(WAIT_DELAY);
-						} catch (InterruptedException e) {
-							throw new RuntimeException(e);
-						}
-					}
+					slowReading();
 					if (task != null) {
 						if (task.isCancelled()) {
 							return false;
@@ -234,6 +236,17 @@ public class DropboxService extends Service {
 			}
 		} catch (DbxException e) {
 			throw getException(e);
+		}
+	}
+
+	private void slowReading() {
+		if (SLOW_READING) {
+			try {
+				Thread.sleep(WAIT_DELAY);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
@@ -336,16 +349,13 @@ public class DropboxService extends Service {
         }
     }
 	
+	@Override
 	public String getMessage(String key, Locale locale) {
 		try {
-//System.out.print ("Looking for "+key);
 			String serviceKey = getClass().getPackage().getName() + key.substring(MessagePack.KEY_PREFIX.length());
-//System.out.print (" customizedkey is "+serviceKey);
 			String result = com.fathzer.soft.jclop.dropbox.swing.MessagePack.getString(serviceKey, locale);
-//System.out.println ("-> customized found");
 			return result;
 		} catch (MissingResourceException e) {
-//System.out.println ("-> get default");
 			return MessagePack.DEFAULT.getString(key, locale);
 		}
 	}
@@ -355,34 +365,73 @@ public class DropboxService extends Service {
 		if (!uri.getScheme().equals(getScheme())) {
 			throw new IllegalArgumentException();
 		}
-		try {
-			String path = URLDecoder.decode(uri.getPath().substring(1), UTF_8);
-			int index = path.indexOf('/');
-			String accountName = path.substring(0, index);
-			path = path.substring(index+1);
-			String[] split = StringUtils.split(uri.getUserInfo(), ':');
-			String accountId = URLDecoder.decode(split[0], UTF_8);
-			Account account = getAccount(accountId);
-			if (account==null) {
-				// The account is unknown
-				Serializable connectionData = getConnectionData(split[1]);
-				account = newAccount(accountId, accountName, connectionData);
-			}
-			return new Entry(account, path);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+		String path = urlDecode(uri.getPath().substring(1));
+		int index = path.indexOf('/');
+		String accountName = path.substring(0, index);
+		path = path.substring(index+1);
+		String[] split = StringUtils.split(uri.getUserInfo(), ':');
+		String accountId = urlDecode(split[0]);
+		Account account = getAccount(accountId);
+		if (account==null) {
+			// The account is unknown
+			Serializable connectionData = getConnectionData(split[1]);
+			account = newAccount(accountId, accountName, connectionData);
 		}
+		return new Entry(account, path);
 	}
 
 	public DbxConnectionData getConnectionData() {
 		return this.data;
 	}
-
-	public void setDisplayName(Account account) throws JClopException {
+	
+	protected void updateDisplayName(Account account) throws JClopException {
 		try {
 			account.setDisplayName(getDropboxAPI(account).users().getCurrentAccount().getName().getDisplayName());
 		} catch (DbxException e) {
 			throw getException(e);
 		}
+	}
+	
+	static String urlEncode(String str) {
+		try {
+			return URLEncoder.encode(str, UTF_8);
+		} catch (UnsupportedEncodingException e) {
+			throw new ShouldNotHappenException(e);
+		}
+	}
+	private static String urlDecode(String str) {
+		try {
+			return URLDecoder.decode(str, UTF_8);
+		} catch (UnsupportedEncodingException e) {
+			throw new ShouldNotHappenException(e);
+		}
+	}
+
+	/** Finish the authentication or re-authentication of an account.
+	 * @param finish The result of the authenticate process
+	 * @return an account that have correct connection data
+	 */
+	public Account authenticate(DbxAuthFinish finish) {
+		final String id = finish.getUserId();
+		if (id.equals(this.currentId)) {
+			// Delete current client, it may have obsolete credentials
+			this.currentApi = null;
+			this.currentId = null;
+		}
+		Account account = getAccount(id);
+		final Credentials connectionData = new Credentials(finish.getAccessToken(), finish.getExpiresAt(), finish.getRefreshToken());
+		if (account==null) {
+			// This is a new account
+			account = newAccount(id, "?", connectionData);
+		} else {
+			// This is an existing account => update it
+			account.setConnectionData(connectionData);
+		}
+		try {
+			updateDisplayName(account);
+		} catch (JClopException e) {
+			LoggerFactory.getLogger(getClass()).warn("Unable to get account name from Dropbox", e);
+		}
+		return account;
 	}
 }

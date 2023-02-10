@@ -5,12 +5,9 @@ import java.awt.Window;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.slf4j.LoggerFactory;
-
 import com.dropbox.core.DbxAuthFinish;
 import com.fathzer.soft.ajlib.swing.Utils;
 import com.fathzer.soft.jclop.Account;
-import com.fathzer.soft.jclop.JClopException;
 import com.fathzer.soft.jclop.dropbox.DropboxService;
 import com.fathzer.soft.jclop.swing.AbstractURIChooserPanel;
 
@@ -35,21 +32,7 @@ public class DropboxURIChooser extends AbstractURIChooserPanel {
 		if (finish==null) {
 			return null;
 		}
-		String id = finish.getUserId();
-		Account account = getService().getAccount(id);
-		if (account==null) {
-			// This is a new account
-			account = getService().newAccount(id, null, finish.getAccessToken());
-			try {
-				((DropboxService)getService()).setDisplayName(account);
-			} catch (JClopException e) {
-				LoggerFactory.getLogger(getClass()).warn("Unable to get account name from Dropbox", e);
-			}
-		} else {
-			// This is an existing account => update it
-			account.setConnectionData(finish.getAccessToken());
-		}
-		return account;
+		return ((DropboxService) getService()).authenticate(finish);
 	}
 
 	@Override
