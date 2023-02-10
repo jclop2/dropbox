@@ -1,6 +1,6 @@
 package com.fathzer.soft.jclop.dropbox;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -9,11 +9,11 @@ import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.dropbox.core.http.HttpRequestor;
 
-public class DbxConnectionDataTest {
+class DbxConnectionDataTest {
 	private Field configField;
 	private Field proxyField;
 	private Method getAuthMethod;
@@ -30,7 +30,7 @@ public class DbxConnectionDataTest {
 	}
 
 	@Test
-	public void test() throws Exception {
+	void test() throws Exception {
 		Authenticator currentAuth = getDefaultAuthenticator();
 		DbxConnectionData.Builder builder = new DbxConnectionData.Builder("name", "key", "secret");
 		DbxConnectionData data = builder.build();
@@ -61,10 +61,10 @@ public class DbxConnectionDataTest {
 		assertEquals(Proxy.NO_PROXY, getProxy(builder.build()));
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
-	public void wrongPort() {
+	@Test
+	void wrongPort() {
 		DbxConnectionData.Builder builder = new DbxConnectionData.Builder("name", "key", "secret");
-		builder.withProxy("host.com", 0);
+		assertThrows(IllegalArgumentException.class, () -> builder.withProxy("host.com", 0));
 	}
 
 	private Proxy getProxy(DbxConnectionData data) throws Exception {

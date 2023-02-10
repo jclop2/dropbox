@@ -1,13 +1,13 @@
 package com.fathzer.soft.jclop.dropbox;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CredentialsTest {
+class CredentialsTest {
 
 	@Test
-	public void test() {
+	void test() {
 		Credentials c = Credentials.fromLongLived("access");
 		c = new Credentials("a",1000,"r");
 		assertEquals("a",c.getAccessToken());
@@ -31,18 +31,9 @@ public class CredentialsTest {
 		c.toString();
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testIllegal1() {
-		Credentials.fromLongLived("");
-	}
-
-	@Test(expected = IllegalArgumentException.class)
-	public void testIllegal2() {
-		new Credentials(null,0,null);
-	}
-
-	@Test(expected = IllegalArgumentException.class)
-	public void testIllegal3() {
-		new Credentials("toto",0,null);
+	void testIllegal() {
+		assertThrows(IllegalArgumentException.class, () -> Credentials.fromLongLived(""));
+		assertThrows(IllegalArgumentException.class, () -> new Credentials(null,0,null));
+		assertThrows(IllegalArgumentException.class, () -> new Credentials("toto",0,null));
 	}
 }

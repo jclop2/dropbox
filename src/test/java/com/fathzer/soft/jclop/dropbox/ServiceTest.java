@@ -1,16 +1,16 @@
 package com.fathzer.soft.jclop.dropbox;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.LogTrick;
@@ -25,17 +25,17 @@ import com.fathzer.soft.jclop.Account;
 import com.fathzer.soft.jclop.Entry;
 import com.fathzer.soft.jclop.InvalidConnectionDataException;
 
-public class ServiceTest {
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+class ServiceTest {
+	@TempDir
+	public File folder;
 	private DropboxService service;
 	
-	@BeforeClass
+	@BeforeAll
 	public static void setMock() {
 		DbxClientV2.rcp = new CurrentAccountRCPMock();
 	}
 	
-	@AfterClass
+	@AfterAll
 	public static void removeMock() {
 		DbxClientV2.rcp = null;
 	}
@@ -47,7 +47,7 @@ public class ServiceTest {
 	private DropboxService getService() throws IOException {
 		if (service==null) {
 			final DbxConnectionData ctx = new DbxConnectionData.Builder("Test", "TestKey", "TestSecret").build();
-			service = new DropboxService(folder.getRoot(), ctx) {
+			service = new DropboxService(folder, ctx) {
 				@Override
 				protected DbxCredential getDbxCredential(Account account, String access, long expiresAt, String refresh, DbxAppInfo appInfo) {
 					return new MockDbxCredentials(account, access, expiresAt, refresh, appInfo.getKey(), appInfo.getSecret());
@@ -58,7 +58,7 @@ public class ServiceTest {
 	}
 	
 	@Test
-	public void testTokenUpdate() throws Exception {
+	void testTokenUpdate() throws Exception {
 		setRcpDisplayName("otherAccountName");
 		final DropboxService svce = getService();
 		DbxAuthFinish auth = new DbxAuthFinish("expired", -1000L, "refresh", "17884", "team", "account", null);
@@ -71,7 +71,7 @@ public class ServiceTest {
 	}
 	
 	@Test
-	public void testAccountToCredentials() throws IOException {
+	void testAccountToCredentials() throws IOException {
 		final DropboxService svce = getService();
 		Account account = new Account(svce, "x", "name", "aLongLivedToken");
 		DbxCredential credentials = svce.getCredentials(account);
@@ -87,16 +87,16 @@ public class ServiceTest {
 		assertEquals("refresh",credentials.getRefreshToken());
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testWrongAccountCredentials() throws IOException {
+	@Test
+	void testWrongAccountCredentials() throws IOException {
 		final DropboxService svce = getService();
 		Account account = new Account(svce, "x", "name", Long.MAX_VALUE);
-		svce.getCredentials(account);
+		assertThrows(IllegalArgumentException.class, () -> svce.getCredentials(account));
 	}
 
 	
 	@Test
-	public void testURL() throws Exception {
+	void testURL() throws Exception {
 		setRcpDisplayName("otherAccountName");
 		final DropboxService svce = getService();
 		final URI url = URI.create("dropbox://17882:OAuth2-MyFuckingToken@cloud.jclop.fathzer.com/Jules+Cesar/Comptes");
@@ -151,7 +151,7 @@ public class ServiceTest {
 	}
 	
 	@Test
-	public void testDbxClientUpdatedWhenAuthenticationIsMadeAgain() throws IOException {
+	void testDbxClientUpdatedWhenAuthenticationIsMadeAgain() throws IOException {
 		final DropboxService svce = getService();
 		final Account account = svce.getEntry(URI.create("dropbox://17882:OAuth2-MyFuckingToken@cloud.jclop.fathzer.com/Jules+Cesar/Comptes")).getAccount();
 		final String okToken = "workingOne";
@@ -171,18 +171,22 @@ public class ServiceTest {
 		}
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
-	public void wrongObject() throws IOException {
-		getService().getConnectionDataURIFragment("Wrong connection data object");
+	@Test
+	void wrongObject() throws IOException {
+		final DropboxService svce = getService();
+		assertThrows (IllegalArgumentException.class, () -> svce.getConnectionDataURIFragment("Wrong connection data object"));
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
-	public void wrongObject2() throws IOException {
-		getService().getConnectionData("Wrong connection data URI fragment");
+	@Test
+	void wrongObject2() throws IOException {
+		final DropboxService svce = getService();
+		assertThrows (IllegalArgumentException.class, () -> svce.getConnectionData("Wrong connection data URI fragment"));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void wrongURL() throws IOException {
-		getService().getEntry(URI.create("http://17882:OAuth2-MyFuckingToken@cloud.jclop.fathzer.com/Jules+Cesar/Comptes"));
+	@Test
+	void wrongURL() throws IOException {
+		final DropboxService svce = getService();
+		final URI uri = URI.create("http://17882:OAuth2-MyFuckingToken@cloud.jclop.fathzer.com/Jules+Cesar/Comptes");
+		assertThrows (IllegalArgumentException.class, () -> svce.getEntry(uri));
 	}
 }
