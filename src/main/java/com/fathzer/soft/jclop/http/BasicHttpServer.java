@@ -57,7 +57,6 @@ abstract class BasicHttpServer {
 		if (rqThread!=null) {
 			rqThread.interrupt();
 			isStarted = false;
-			WorkerThread.kill();
 		}
 	}
 

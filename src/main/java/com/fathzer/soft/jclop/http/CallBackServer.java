@@ -29,7 +29,7 @@ public class CallBackServer<T> implements Closeable {
 			server.setPort(port);
 			try {
 				server.start();
-				final CallBackServer<T> callBackServer = new CallBackServer<T>(server, handler);
+				final CallBackServer<T> callBackServer = new CallBackServer<>(server, handler);
 				handler.setResultBuilder(r -> {
 					callBackServer.result = resultBuilder.apply(r);
 					return callBackServer.result!=null;
