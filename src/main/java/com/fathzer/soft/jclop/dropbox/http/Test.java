@@ -1,61 +1,68 @@
 package com.fathzer.soft.jclop.dropbox.http;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
-import com.dropbox.core.DbxApiException;
-import com.dropbox.core.DbxAuthFinish;
-import com.dropbox.core.DbxException;
-import com.dropbox.core.DbxStandardSessionStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.dropbox.core.DbxWebAuth;
 import com.dropbox.core.TokenAccessType;
-import com.dropbox.core.v2.DbxClientV2;
 import com.fathzer.soft.ajlib.swing.Browser;
 import com.fathzer.soft.jclop.dropbox.DbxConnectionData;
-import com.fathzer.soft.jclop.dropbox.swing.ConnectionDialog;
 import com.fathzer.soft.jclop.dropbox.swing.MessagePack;
 import com.fathzer.soft.jclop.http.CallBackServer;
+import com.fathzer.soft.jclop.http.Request;
 
 public class Test {
-
+	private static final Logger log = LoggerFactory.getLogger(Test.class);
+	
 	public static void main(String[] args) throws Exception {
-		final DbxConnectionData ctxData = new DbxConnectionData.Builder(args[0],args[1],args[2]).build();
-		CallBackServer server=CallBackServer.build(60947,62955,64825);
+		Function<Request, String> resBuilder = r -> {
+			final List<String> error = r.getParameters().get("error");
+			if (error!=null) {
+				return null;
+			} else {
+				final List<String> code = r.getParameters().get("code");
+				if (code==null || code.size()!=1) {
+					throw new IllegalArgumentException();
+				}
+				return code.get(0);
+			}
+		};
+		
+		final CallBackServer<String> server=CallBackServer.build(resBuilder, 60947,62955,64825);
 		if (server==null) {
-			System.out.println("No port available");
+			log.debug("No port available");
 			return;
 		}
 	    try {
-		    final SessionStore sessionStore = new SessionStore();
-			final DbxWebAuth.Request authRequest = DbxWebAuth.newRequestBuilder()
-	    		.withRedirectUri(server.getURL(),sessionStore)
-	    		.withTokenAccessType(TokenAccessType.OFFLINE)
-	            .build();
-	        final String authorizeUrl = new DbxWebAuth(ctxData.getConfig(), ctxData.getAppInfo()).authorize(authRequest);
-	    	Browser.show(URI.create(authorizeUrl), null, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", Locale.getDefault())); //$NON-NLS-1$
-	    	synchronized(server) {
-	    		server.wait(sessionStore.get());
-	    	}
+	    	Test test = new Test(new DbxConnectionData.Builder(args[0],args[1],args[2]).build());
+	    	Browser.show(test.getURI(server), null, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.error.unableToLaunchBrowser.title", Locale.getDefault())); //$NON-NLS-1$
 	    } finally {
+	    	System.out.println("Result is "+server.getAuthResult());
 	    	server.close();
 	    }
-		
-		
-//		final ConnectionDialog dialog = new ConnectionDialog(null, ctxData, Locale.FRANCE);
-//		dialog.setVisible(true);
-//		DbxAuthFinish result = dialog.getResult();
-//		System.out.println (result.getRefreshToken());
-//		System.out.println (result.getAccessToken() +" -> "+result.getExpiresAt());
-//		String refreshToken = result.getRefreshToken();
-
-		
-//		final String refreshToken = System.getProperty("refresh");
-//		final String eternalAccessToken = System.getProperty("access");
-//		
-//		final Credentials cred = Credentials.fromRefresh(refreshToken); 
-//		final Credentials cred = Credentials.fromLongLived(eternalAccessToken); 
-//		DbxClientV2 api = new DbxClientV2(ctxData.getConfig(), cred.toDbx(ctxData.getAppInfo()));
-//		System.out.println (api.users().getCurrentAccount().getName());
 	}
 
+	private DbxConnectionData ctxData;
+
+	public Test(DbxConnectionData ctxData) {
+		this.ctxData = ctxData;
+	}
+	
+	protected <T> URI getURI(CallBackServer<T> server) {
+	    final SessionStore sessionStore = new SessionStore();
+		final DbxWebAuth.Request authRequest = DbxWebAuth.newRequestBuilder()
+    		.withRedirectUri(server.getURL(),sessionStore)
+    		.withTokenAccessType(TokenAccessType.OFFLINE)
+            .build();
+		server.setChallenge(r -> {
+			final List<String> list = r.getParameters().get("state");
+			return list!=null && list.contains(sessionStore.get());
+		});
+        return URI.create(new DbxWebAuth(ctxData.getConfig(), ctxData.getAppInfo()).authorize(authRequest));
+	}
 }
