@@ -1,6 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.fathzer</groupId>
+	<parent>
+		<groupId>com.fathzer</groupId>
+		<artifactId>parent-pom</artifactId>
+		<version>1.0.5</version>
+	</parent>
 	<artifactId>jclop-dropbox2</artifactId>
 	<version>0.1.5</version>
 	<name>JClop-Dropbox</name>
@@ -10,40 +14,13 @@
 		<url>https://github.com/jclop2/dropbox.git</url>
 		<connection>https://github.com/jclop2/dropbox.git</connection>
 	</scm>
-	<licenses>
-		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-			<comments>A business-friendly OSS license</comments>
-		</license>
-	</licenses>
-	<developers>
-		<developer>
-			<id>Fathzer</id>
-			<name>Jean-Marc Astesana</name>
-			<email>admin@fathzer.com</email>
-		</developer>
-	</developers>
-	<distributionManagement>
-		<repository>
-			<id>ReleaseFathzer</id>
-			<name>Release fathzer.com</name>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-		</repository>
-		<snapshotRepository>
-			<id>SnapshotFathzer</id>
-			<name>Snapshot fathzer.com</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-			<uniqueVersion>false</uniqueVersion>
-		</snapshotRepository>
-	</distributionManagement>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<sonar.organization>jclop</sonar.organization>
-		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 		<maven.compiler.target>8</maven.compiler.target>
 		<maven.compiler.source>8</maven.compiler.source>
+		<check-dependencies-java-version>${maven.compiler.target}</check-dependencies-java-version>
+		<animal-sniffer-signature>java18</animal-sniffer-signature>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -79,43 +56,12 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<profiles>
-		<profile>
-			<!-- This profile allows developper to specify which java installation to use using toolchains (see https://maven.apache.org/plugins/maven-toolchains-plugin/index.html)
-				It is useful when target java version is no more supported by default java installation.
-			-->
-			<id>tc</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-toolchains-plugin</artifactId>
-						<version>1.1</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>toolchain</goal>
-								</goals>
-							</execution>
-						</executions>
-						<configuration>
-							<toolchains>
-								<jdk>
-									<version>1.8</version>
-									<vendor>sun</vendor>
-								</jdk>
-							</toolchains>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -125,58 +71,10 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>animal-sniffer-maven-plugin</artifactId>
-				<version>1.22</version>
-				<configuration>
-					<signature>
-						<groupId>org.codehaus.mojo.signature</groupId>
-						<artifactId>java18</artifactId>
-						<version>1.0</version>
-					</signature>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>test</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.kohsuke</groupId>
-				<artifactId>pgp-maven-plugin</artifactId>
-				<version>1.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<!-- For obvious security reasons, keyFile and pass phrase are not provided, 
-						they should be in files present in the user's home directory -->
-					<secretkey>keyfile:${user.home}/fathzer_private_key.asc</secretkey>
-					<passphrase>file:${user.home}/fathzer_key_pwd.txt</passphrase>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.3.1</version>
 				<configuration>
 					<!-- see https://stackoverflow.com/questions/69320220/maven-javadoc-listed-classes-twice -->
 					<sourcepath>${basedir}/src/main/java</sourcepath>
