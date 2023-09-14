@@ -1,4 +1,4 @@
-[![Maven Central](https://img.shields.io/maven-central/v/com.fathzer/jclop-dropbox2)](https://central.sonatype.com/artifact/com.fathzer/plugin-loader)
+[![Maven Central](https://img.shields.io/maven-central/v/com.fathzer/jclop-dropbox2)](https://central.sonatype.com/artifact/com.fathzer/jclop-dropbox2)
 <picture>
   <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg">
 </picture>
