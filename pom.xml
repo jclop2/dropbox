@@ -3,10 +3,10 @@
 	<parent>
 		<groupId>com.fathzer</groupId>
 		<artifactId>parent-pom</artifactId>
-		<version>1.0.5</version>
+		<version>1.0.8</version>
 	</parent>
 	<artifactId>jclop-dropbox2</artifactId>
-	<version>0.1.5</version>
+	<version>0.2.0</version>
 	<name>JClop-Dropbox</name>
 	<url>http://jclop.soft.fathzer.com</url>
 	<description>A library to manage Dropbox service in JClop.</description>
@@ -16,17 +16,15 @@
 	</scm>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<sonar.organization>jclop</sonar.organization>
-		<maven.compiler.target>8</maven.compiler.target>
-		<maven.compiler.source>8</maven.compiler.source>
-		<check-dependencies-java-version>${maven.compiler.target}</check-dependencies-java-version>
+	    <maven.compiler.release>8</maven.compiler.release>
 		<animal-sniffer-signature>java18</animal-sniffer-signature>
+		<check-dependencies-java-version>${maven.compiler.release}</check-dependencies-java-version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>com.dropbox.core</groupId>
 			<artifactId>dropbox-core-sdk</artifactId>
-			<version>5.4.4</version>
+			<version>3.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fathzer</groupId>
@@ -61,12 +59,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<!-- JUnit 5 requires Surefire version 2.22.0 or higher -->
-				<version>2.22.2</version>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

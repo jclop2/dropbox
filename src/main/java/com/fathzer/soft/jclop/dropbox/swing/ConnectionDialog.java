@@ -55,7 +55,8 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 			pair = webAuth.finishFromCode(code);
 		} catch (BadRequestException e) {
 			// The user didn't grant the access to Dropbox
-			AbstractURIChooserPanel.showError(this, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.accessNotGranted", getLocale()), getLocale()); //$NON-NLS-1$
+			final String message = MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.accessNotGranted", getLocale()); //$NON-NLS-1$
+			AbstractURIChooserPanel.showError(this, Formatter.format(message, data.getAppName()), getLocale());
 			getConnectionButtonsPanel().getConnectButton().setEnabled(true);
 			updateOkButtonEnabled();
 			return;
