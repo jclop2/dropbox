@@ -8,7 +8,7 @@
 # jclop2-dropbox
 A [JClop](https://github.com/jclop2/JClop) implementation that uses Dropbox as underlying storage provider.
 
-It requires java 6+.
+It requires java 8+.
 
 Limitations : sub-folders are not supported in Swing file chooser.
 
