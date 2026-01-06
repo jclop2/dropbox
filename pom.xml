@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>jclop-dropbox2</artifactId>
-	<version>0.1.7</version>
+	<version>0.1.8</version>
 	<parent>
 		<groupId>com.fathzer</groupId>
 		<artifactId>parent-pom</artifactId>
-		<version>1.0.8</version>
+		<version>1.1.0</version>
 	</parent>
 	<name>JClop-Dropbox</name>
 	<url>http://jclop.soft.fathzer.com</url>
@@ -16,12 +16,15 @@
 	</scm>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>8</maven.compiler.source>
+		<maven.compiler.target>8</maven.compiler.target>
+		<check-dependencies-java-version>8</check-dependencies-java-version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>com.dropbox.core</groupId>
 			<artifactId>dropbox-core-sdk</artifactId>
-			<version>3.2.1</version>
+			<version>7.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fathzer</groupId>
@@ -51,93 +54,11 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<profiles>
-		<profile>
-			<!-- This profile allows developper to specify which java installation to use using toolchains (see https://maven.apache.org/plugins/maven-toolchains-plugin/index.html)
-				It is useful when target java version is no more supported by default java installation.
-			-->
-			<id>tc</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-toolchains-plugin</artifactId>
-						<version>1.1</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>toolchain</goal>
-								</goals>
-							</execution>
-						</executions>
-						<configuration>
-							<toolchains>
-								<jdk>
-									<version>1.6</version>
-									<vendor>sun</vendor>
-								</jdk>
-							</toolchains>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>animal-sniffer-maven-plugin</artifactId>
-				<version>1.22</version>
-				<configuration>
-					<signature>
-						<groupId>org.codehaus.mojo.signature</groupId>
-						<artifactId>java16</artifactId>
-						<version>1.0</version>
-					</signature>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>test</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.2.1</version>
-				<executions>
-					<execution>
-						<id>enforce-bytecode-version</id>
-						<goals>
-							<goal>enforce</goal>
-						</goals>
-						<configuration>
-							<rules>
-								<enforceBytecodeVersion>
-									<maxJdkVersion>1.6</maxJdkVersion>
-									<ignoredScopes>
-										<ignoreScope>test</ignoreScope>
-									</ignoredScopes>
-								</enforceBytecodeVersion>
-							</rules>
-							<fail>true</fail>
-						</configuration>
-					</execution>
-				</executions>
-				<dependencies>
-					<dependency>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>extra-enforcer-rules</artifactId>
-						<version>1.6.1</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 		</plugins>
 	</build>
