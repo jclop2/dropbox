@@ -78,9 +78,7 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 	@Override
 	protected JPanel createButtonsPane() {
 		getConnectionButtonsPanel().addButtons(getOkButton(), getCancelButton());
-		cButtons.getConnectButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent event) {
+		cButtons.getConnectButton().addActionListener(event -> {
 				Window window = Utils.getOwnerWindow(cButtons);
 			    webAuth = new DbxWebAuth(data.getConfig(), data.getAppInfo());
 			    DbxWebAuth.Request authRequest = DbxWebAuth.newRequestBuilder()
@@ -92,8 +90,7 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 		    	connectionHasStarted = true;
 			    cButtons.getConnectButton().setEnabled(false);
 				updateOkButtonEnabled();
-			}
-		});
+			});
 		return cButtons;
 	}
 	

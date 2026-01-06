@@ -129,7 +129,7 @@ public class DropboxService extends Service {
 			}
 
 			// Get the remote files list
-			Collection<Entry> result = new ArrayList<Entry>();
+			Collection<Entry> result = new ArrayList<>();
 			ListFolderResult files = api.files().listFolder("");
 			while (true) {
 			    for (Metadata metadata : files.getEntries()) {
@@ -275,12 +275,7 @@ public class DropboxService extends Service {
 			final UploadUploader uploader = uploaderBuilder.start();
 			try {
 				if (task != null) {
-					task.setCancelAction(new Runnable() {
-						@Override
-						public void run() {
-							uploader.abort();
-						}
-					});
+					task.setCancelAction(uploader::abort);
 				}
 				long byteSent = 0;
 				byte[] buffer = new byte[chunkSize];

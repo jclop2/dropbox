@@ -8,7 +8,7 @@ public class CredentialsTest {
 
 	@Test
 	public void test() {
-		Credentials c = Credentials.fromLongLived("access");
+		Credentials c;
 		c = new Credentials("a",1000,"r");
 		assertEquals("a",c.getAccessToken());
 		assertEquals(1000, c.getExpiresAt());
