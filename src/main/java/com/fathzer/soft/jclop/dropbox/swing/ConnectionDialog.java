@@ -1,8 +1,6 @@
 package com.fathzer.soft.jclop.dropbox.swing;
 
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.net.URI;
 import java.util.Locale;
 
@@ -28,9 +26,9 @@ public class ConnectionDialog extends AbstractDialog<DbxConnectionData, DbxAuthF
 	private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionDialog.class);
 	
 	private boolean connectionHasStarted;
-	private DbxAuthFinish pair;
-	private DbxWebAuth webAuth;
-	private ConnectionButtonsPanel cButtons;
+	private transient DbxAuthFinish pair;
+	private transient DbxWebAuth webAuth;
+	private transient ConnectionButtonsPanel cButtons;
 
 	public ConnectionDialog(Window owner, DbxConnectionData appInfo, Locale locale) {
 		super(owner, MessagePack.getString("com.fathzer.soft.jclop.dropbox.ConnectionDialog.title", locale), appInfo); //$NON-NLS-1$
